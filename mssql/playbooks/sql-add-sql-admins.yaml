@@ -1,0 +1,24 @@
+- name: add SQL admins
+  hosts: sql
+  gather_facts: no
+  collections:
+   - ansible.windows
+
+  vars_files:
+     - "{{ipack}}mssql/playbooks/vars/sql-server-common-vars.yaml"
+     - "{{customer_data_dir}}common/domain-common-vars.yaml"
+
+  vars:
+     hostname: "{{host_name}}"
+  
+  tasks:
+    - name: Add domain user as SQL Server admin
+      ansible.windows.win_shell: >
+        sqlcmd -S {{hostname}} -U sa -P "ysTe2eapqW6PVS0fuqZ0" -Q "IF NOT EXISTS (SELECT name FROM sys.server_principals WHERE name = N'{{ domain_short_name }}\{{ DevServiceUser }}') BEGIN CREATE LOGIN ['{{ domain_short_name }}\{{ DevServiceUser  }}'] FROM WINDOWS; EXEC sp_addsrvrolemember N'{{ domain_short_name }}\{{ DevServiceUser  }}', N'sysadmin'; END"
+
+    - name: Add domain user as SQL Server admin
+      ansible.windows.win_shell: >
+        sqlcmd -S {{hostname}} -U sa -P "ysTe2eapqW6PVS0fuqZ0" -Q "IF NOT EXISTS (SELECT name FROM sys.server_principals WHERE name = N'{{ domain_short_name }}\{{ sql_azureadmin_user }}') BEGIN CREATE LOGIN ['{{ domain_short_name }}\{{ sql_azureadmin_user }}'] FROM WINDOWS; EXEC sp_addsrvrolemember N'{{ domain_short_name }}\{{ sql_azureadmin_user }}', N'sysadmin'; END"
+
+
+

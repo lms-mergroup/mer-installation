@@ -1,0 +1,41 @@
+- name: update administrator in table "user"
+  hosts: sql
+  gather_facts: no
+  collections:
+   - ansible.windows
+
+  vars_files:
+   - "{{ipack}}mssql/playbooks/vars/sql-server-common-vars.yaml"
+   - "{{customer_data_dir}}common/domain-common-vars.yaml"
+   - "{{customer_data_dir}}mssql/sql-install-vars.yaml"
+
+  vars:
+     hostname: "{{host_name}}"
+ 
+  tasks:
+  
+    - name: Show full path of the variable file
+      ansible.builtin.debug:
+        msg: "Loading vars from {{ipack}}mssql/playbooks/vars/sql-server-common-vars.yaml"
+
+    - name: Update GIS URL in SQL Server
+      vars:
+         new_url: "http://{{hostname}}/GISServer/Web/GeoService.svc/rest/services"
+         old_url: "http://localhost/GISServer/Web/GeoService.svc/rest/services"
+
+      ansible.windows.win_shell: |
+         sqlcmd -S {{hostname}} -U sa -P "{{sql_sa_password}}" -d "{{ sql_db }}" -Q "UPDATE [dbo].[GisMdLayerSources] SET [Url] = '{{ new_url }}' WHERE [Url] = '{{ old_url }}'"
+      register: update_result
+
+    - name: Print SQL update output
+      debug:
+        var: update_result.stdout
+
+    - name: Run SELECT to verify change
+      ansible.windows.win_shell: |
+         sqlcmd -S {{hostname}} -U sa -P "{{sql_sa_password}}" -d "{{ sql_db }}" -Q "SELECT TOP 5 [Url] FROM [dbo].[GisMdLayerSources]"
+      register: verify_result
+
+    - name: Print verification results
+      debug:
+        var: verify_result.stdout

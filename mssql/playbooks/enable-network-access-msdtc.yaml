@@ -1,0 +1,46 @@
+- name: Configure Local DTC properties
+  hosts: sql
+  gather_facts: no
+  collections:
+    - ansible.windows
+
+  tasks:
+    - name: Enable Network DTC Access via registry
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\MSDTC\Security
+        name: NetworkDtcAccess
+        data: 1
+        type: dword
+
+    - name: Enable Network DTC Access transactions via registry
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\MSDTC\Security
+        name: NetworkDtcAccessTransactions
+        data: 1
+        type: dword
+
+    - name: Allow Inbound transactions
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\MSDTC\Security
+        name: NetworkDtcAccessInbound
+        data: 1
+        type: dword
+
+    - name: Allow Outbound transactions
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\MSDTC\Security
+        name: NetworkDtcAccessOutbound
+        data: 1
+        type: dword
+
+    - name: Enable Remote Administration Access
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\MSDTC\Security
+        name: NetworkDtcAccessAdmin
+        data: 1
+        type: dword
+
+    - name: Restart MSDTC Service
+      ansible.windows.win_service:
+        name: MSDTC
+        state: restarted

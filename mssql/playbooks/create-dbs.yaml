@@ -1,0 +1,56 @@
+- name: Create DB
+  hosts: sql 
+  gather_facts: no
+  collections:
+     - ansible.windows
+ 
+  vars_files:
+     - "{{customer_data_dir}}common/domain-common-vars.yaml"
+     - "{{ipack}}mssql/playbooks/vars/sql-server-common-vars.yaml"
+
+  vars:
+     hostname: "{{host_name}}"
+  tasks:
+     - name: Check if SNMG.data already exists
+       ansible.windows.win_shell: |
+         sqlcmd -S {{ hostname }} -U sa -P "{{ DevServiceUser_password }}" -d master -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = '{{ sql_db }}';"
+       register: db_check 
+
+     - name: Check result
+       debug:
+         var: db_check.stdout_lines
+
+     - name: Debug result
+       debug: 
+         msg: "Database {{ sql_db }} does not exist"
+       when: sql_db not in (db_check.stdout_lines | map('trim') | list)
+
+     - name: Set fact that DB does not exist
+       set_fact:
+         db_exist: false
+       when: sql_db not in (db_check.stdout_lines | map('trim') | list)
+
+- name: Run on secondary if DB not found
+  hosts: iis #iissql
+  gather_facts: no
+ 
+  vars_files:
+    - "{{customer_data_dir}}common/domain-common-vars.yaml"
+    - "{{ipack}}mssql/playbooks/vars/sql-server-common-vars.yaml"
+
+  vars:
+     hostname: "{{hostvars['sql'].host_name}}"
+
+  tasks:
+     - name: Run script only if DB missing on SQL
+       ansible.windows.win_shell: |
+          & '{{ db_updater_path }}' --silent  --db-type sqlserver --server '{{hostname}}' --databases smng.data,smng.gis,smng.external --all
+       args:
+         chdir: 'C:\SMNG\DBUpdater'
+         executable: powershell
+       become: yes
+       become_method: runas
+       become_user: '{{domain_short_name}}\{{DevServiceUser}}'                      #'mersandbox\DevServiceUser'
+       vars:
+         ansible_become_password: "{{DevServiceUser_password}}"                     #"ysTe2eapqW6PVS0fuqZ0"   
+       when: hostvars['sql'].db_exist is defined and not hostvars['sql'].db_exist

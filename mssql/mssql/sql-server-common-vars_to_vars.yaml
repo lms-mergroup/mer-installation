@@ -1,0 +1,13 @@
+sql_db: "SMNG.DATA"
+db_updater_path: 'C:\SMNG\DBUpdater\SecureM.NG.DBUpdate.CLI.exe'
+sql_smartm_user: "SmartmUser"
+sql_smartm_user_password: "smartm123qwe$1"
+sql_azureadmin_user: "azureadmin"
+sql_table_user_administrator_id: "86F56643-65A1-4108-9DD3-D391B4575969"
+sql_tables_smartm_owner:
+                     - SNMG_DATA
+                     - SNMG_DW
+                     - SNMG_EXTERNAL
+                     - SNMG_GIS
+                     - SNMG_LOG
+ 

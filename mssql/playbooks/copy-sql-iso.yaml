@@ -1,0 +1,19 @@
+- name: copy iso file
+  hosts: sql
+  gather_facts: no
+  collections:
+   - ansible.windows
+ 
+  vars_files:
+   - "{{customer_data_dir}}/sql-install-vars.yaml"
+  
+  tasks:
+    - name: Ensure iso exists
+      ansible.windows.win_file:
+        path: "{{sql_iso_path}}"
+        state: directory
+
+    - name: Copy iso file
+      ansible.windows.win_copy:
+        src: "{{sql_iso_source}}"
+        dest: "{{sql_iso_path}}"

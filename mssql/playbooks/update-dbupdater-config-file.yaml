@@ -1,0 +1,46 @@
+ - name: Update dbupdater config file
+   hosts: iis 
+   gather_facts: no
+   collections:
+    - ansible.windows
+ 
+   vars_files:
+     - "{{ipack}}mssql/playbooks/vars/update-dbupdater-config-vars.yaml"
+     - "{{ipack}}mssql/playbooks/vars/sql-server-common-vars.yaml"
+   vars:
+     hostname: "{{hostvars['sql'].host_name}}"
+  
+   tasks:
+     - name: Show config_path
+       debug:
+         var: config_path
+     - name: replace data source hostname
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '(?i)data source=[^;]+'
+         replace: 'data source={{hostname}}'
+     - name: replace PostgresServer
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '<add\s+key="PostgresServer"\s+value="[^"]*"'
+         replace: '<add key="PostgresServer" value="pg.service.{{ datacenter }}.valerian"'
+     - name: replace PostgresServer
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '<add\s+key="TimescaleServer"\s+value="[^"]*"'
+         replace: '<add key="TimescaleServer" value="timescaledb.service.{{ datacenter }}.valerian"'
+     - name: replace PostgresServer
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '<add\s+key="MongoDBServer" "\s+value="[^"]*"'
+         replace: '<add key="key="MongoDBServer" " value="mongodb://mongodb.service.{{ datacenter }}.valerian:27017"'
+     - name: replace serverConfigurations
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '<serverConfigurations>\s*<add\s+name="[^"]*">'
+         replace: '<serverConfigurations><add name="{{hostname}}">'

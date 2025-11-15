@@ -1,0 +1,21 @@
+# Add domain user to local admin group
+- name: add domain user to local admin group  
+  hosts: sql
+  gather_facts: no
+  collections:
+   - ansible.windows
+
+  vars_files:
+     - "{{customer_data_dir}}common/domain-common-vars.yaml"
+  
+  tasks:
+    - name: Check if domain user is already in Administrators group
+      ansible.windows.win_shell: |
+        net localgroup Administrators | findstr /I "{{domain_short_name}}\{{ DevServiceUser}}"
+      register: admin_check
+      failed_when: false
+
+    - name: Add domain user to local admin group
+      ansible.windows.win_shell: |
+        net localgroup Administrators "{{domain_short_name}}\{{ DevServiceUser}}" /add
+      when: admin_check.rc != 0

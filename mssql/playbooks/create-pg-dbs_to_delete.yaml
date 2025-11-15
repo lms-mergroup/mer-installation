@@ -1,0 +1,29 @@
+- name: create pg DB's
+  hosts: iis
+  gather_facts: no
+  collections:
+   - ansible.windows
+   
+  vars_files:
+     - "{{customer_data_dir}}/domain-common-vars.yaml"
+     - "{{customer_data_dir}}/sql-server-common-vars.yaml"
+
+
+  tasks:
+    - name: Show full path of the variable file
+      ansible.builtin.debug:
+        msg: "Loading vars from {{ customer_data_dir }}"
+ 
+    - name: Run script only if DB missing on SQL
+      ansible.windows.win_shell: |
+          & '{{ db_updater_path }}'  --silent --db-type postgres --pg-database MauiDB
+      args:
+         chdir: 'C:\SMNG\DBUpdater'
+         executable: powershell
+      become: yes
+      become_method: runas
+      become_user: '{{domain_short_name}}\{{DevServiceUser}}'                      #'mersandbox\DevServiceUser'
+      vars:
+        ansible_become_password: "{{DevServiceUser_password}}"                     #"ysTe2eapqW6PVS0fuqZ0"   
+ 
+
