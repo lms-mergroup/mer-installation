@@ -1,0 +1,206 @@
+@App:name("Siddhi_Agam")
+@App:description('Consume events from a Kafka Topic and publish to a different Kafka Topic')
+
+
+--source for Siddhi_Agam
+@source(type='kafka',
+        topic.list='Topic_DA_Agam',
+        partition.no.list='0',
+        threading.option='single.thread',
+        group.id="group",
+              bootstrap.servers='kafka.service.{{datacenter}}.valerian:29092',
+        @map(
+                        type='json', fail.on.missing.attribute='false', enclosing.element="$",
+                        @attributes(
+                                CreationDate = "CreationDate",
+                                InputId = "InputId",
+                                TriggerElementId = "TriggerElementId",
+                                TriggerStr = "TriggerStr",
+                                TriggerId ="TriggerId",
+                                ExternalId="ExternalId",
+				EventName="EventName",
+                                StatusId="StatusId",
+                                ExtraData="ExtraData",
+                                Severity="Severity",
+                                TriggerDescription="TriggerDescription",
+                                EventType="EventType",
+                                UserId="UserId",
+                                InputType="InputType",
+                                ServiceStateId="ServiceStateId",
+                                Notify="Notify",
+                                EventSingleInstanceFlagRaised="EventSingleInstanceFlagRaised"
+                                )
+                        )
+                )
+
+
+define stream SMNGStream_Agam_AsJSON(
+                            CreationDate string,
+                            InputId string,
+                            TriggerElementId string ,
+                            TriggerStr string,
+                            TriggerId string,
+                            ExternalId string,
+			    EventName string,
+                            StatusId string,
+                            ExtraData string,
+                            Severity string,
+                            TriggerDescription string,
+                            EventType string,
+                            UserId string,
+                            InputType string,
+                            ServiceStateId string,
+                            Notify string,
+                            EventSingleInstanceFlagRaised bool
+);
+
+--At the end we need to insert this info into Kafka again
+@sink(type='kafka',
+      topic='Topic_Events',
+bootstrap.servers='kafka.service.{{datacenter}}.valerian:29092',
+      partition.no='0',
+      @map(type='json'))
+
+define stream SMNGStreamEvents(
+                            InputId string,
+                            TriggerElementId string,
+                            TriggerStr string,
+                            TriggerId string,
+                            CreationDate string,
+                            ExternalId string,
+			    EventName string,
+                            StatusId string,
+                            ExtraData string,
+                            TemplateId string, 
+                            UserId string, 
+                            SeverityId string,
+                            totalVolume int,
+                            InputType string,
+                            ServiceStateId string,
+                            EventSingleInstanceFlagRaised bool
+                            );
+
+--At the end we need to insert this info into Kafka again
+@sink(type='kafka',
+      topic='Topic_Inputs',
+bootstrap.servers='kafka.service.{{datacenter}}.valerian:29092',
+      partition.no='0',
+      @map(type='json'))
+
+define stream SMNGStreamInputs(
+                            InputId string,
+                            TriggerElementId string,
+                            TriggerStr string,
+                            TriggerId string,
+                            CreationDate string,
+                            ExternalId string,
+			    EventName string,
+                            StatusId string,
+                            ExtraData string,
+                            TemplateId string, 
+                            UserId string, 
+                            SeverityId string,
+                            totalVolume int,
+                            InputType string,
+                            ServiceStateId string,
+                            EventSingleInstanceFlagRaised bool
+                            );
+
+
+@sink(type='kafka',
+      topic='Topic_Statuses',
+bootstrap.servers='kafka.service.{{datacenter}}.valerian:29092',
+      partition.no='0',
+      @map(type='json'))
+
+define stream SMNGStreamStatuses(
+                            InputId string,
+                            TriggerElementId string,
+                            TriggerStr string,
+                            TriggerId string,
+                            CreationDate string,
+                            ExternalId string,
+			    EventName string,
+                            StatusId string,
+                            ExtraData string,
+                            TemplateId string, 
+                            UserId string, 
+                            SeverityId string,
+                            totalVolume int,
+                            InputType string,
+                            ServiceStateId string,
+                            Notify string,
+                            EventSingleInstanceFlagRaised bool
+                            );
+
+
+--for each input in Topic_DA_Agam move it to Topic_Events
+@info(name='query_events')
+from SMNGStream_Agam_AsJSON [InputType == 'Event' and EventSingleInstanceFlagRaised != true] 
+--#window.length(5)
+select
+    InputId ,
+    TriggerElementId  ,
+    TriggerStr ,
+    TriggerId ,
+    CreationDate,
+    ExternalId ,
+    EventName ,
+    StatusId ,
+    ExtraData ,
+    EventType as TemplateId,
+    UserId,
+    Severity as SeverityId,
+    1 as totalVolume ,
+    InputType,
+    ServiceStateId,
+    EventSingleInstanceFlagRaised
+insert into SMNGStreamEvents;
+
+--for each input in Topic_DA_Agam move it to Topic_Inputs
+@info(name='query_inputs')
+from SMNGStream_Agam_AsJSON [InputType == 'Event' and EventSingleInstanceFlagRaised == true] 
+--#window.length(5)
+select
+    InputId ,
+    TriggerElementId  ,
+    TriggerStr ,
+    TriggerId ,
+    CreationDate,
+    ExternalId ,
+    EventName ,
+    StatusId ,
+    ExtraData ,
+    EventType as TemplateId,
+    UserId,
+    Severity as SeverityId,
+    1 as totalVolume ,
+    InputType,
+    ServiceStateId,
+    EventSingleInstanceFlagRaised
+insert into SMNGStreamInputs;
+
+
+--for each input in Topic_Agam move it to Topic_Statuses
+@info(name='query_Statuses')
+from SMNGStream_Agam_AsJSON [InputType == 'Status'] 
+--#window.length(5)
+select
+    InputId ,
+    TriggerElementId  ,
+    TriggerStr ,
+    TriggerId ,
+    CreationDate,
+    ExternalId ,
+    EventName ,
+    StatusId ,
+    ExtraData ,
+    EventType as TemplateId,
+    UserId,
+    Severity as SeverityId,
+    1 as totalVolume ,
+    InputType,
+    ServiceStateId,
+    Notify,
+    EventSingleInstanceFlagRaised
+insert into SMNGStreamStatuses;

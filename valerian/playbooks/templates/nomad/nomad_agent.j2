@@ -1,0 +1,33 @@
+# ----------- Base Cluster Configuration -----------
+
+region = "global"
+data_dir = "/opt/nomad"
+bind_addr = "0.0.0.0"
+datacenter = "{{ datacenter }}"
+addresses {
+    http = "0.0.0.0"
+    rpc = "0.0.0.0"
+    serf = "0.0.0.0"
+}
+advertise {
+    http = "{{ ansible_host }}:4646"
+    rpc = "{{ ansible_host }}:4647"
+    serf = "{{ ansible_host }}:4648"
+}
+
+log_file = "/opt/nomad/logs/"
+log_level = "INFO"
+log_rotate_duration = "24h"
+log_rotate_max_files = 10
+log_rotate_bytes = 10485760
+
+enable_debug = true
+
+consul {
+  address = "127.0.0.1:8500"
+  server_service_name = "nomad"
+  client_service_name = "nomad-client"
+  auto_advertise = true
+  server_auto_join = true
+  client_auto_join = true
+}

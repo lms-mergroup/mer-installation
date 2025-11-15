@@ -1,0 +1,49 @@
+{
+    "node_name" : "{{ name }}",
+    "datacenter": "{{ datacenter }}",
+    "domain" : "valerian",
+    "bind_addr": "{{ ansible_host }}",
+    "client_addr" : "0.0.0.0",
+    "advertise_addr": "{{ ansible_host }}",
+    
+    "data_dir": "/opt/consul",
+    "log_level": "INFO",
+    "log_file": "/opt/consul/logs/",
+    "log_rotate_duration": "24h",
+    "log_rotate_max_files": 10,
+    "log_rotate_bytes": 10485760,  
+    
+    "enable_syslog" : true,
+    "enable_local_script_checks": true,
+   
+    {% if 'masters' in groups and groups['masters'] | length > 0 %}
+		{% if hostvars['valerian'] is defined %}   
+		"retry_join": [
+			{%- set comma = joiner(",") -%}
+			{%- for server in groups['masters'] -%}
+				{{ comma() }}"{{ hostvars[server].name }}"
+			{%- endfor -%} ],
+		"retry_interval" : "15s",
+		"rejoin_after_leave": true,
+		{% endif %}
+	{% endif %}
+
+    "dns_config": {
+        "enable_truncate": true
+    },
+
+    "ui_config": {
+        "enabled": true
+    },
+    
+    "ports" : {
+        "grpc" : 8502
+    },
+
+    "limits" : {
+        "http_max_conns_per_client": 1000
+    }
+}
+
+
+    

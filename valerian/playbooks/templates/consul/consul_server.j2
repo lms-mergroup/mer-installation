@@ -1,0 +1,8 @@
+{
+ "server": true,
+ {% if hostvars['valerian_c01'] is defined %}
+ "bootstrap_expect": {{ groups['masters'] | length }}
+ {% elif hostvars['valerian'] is defined %}
+ "bootstrap_expect": 1
+ {% endif %}
+}

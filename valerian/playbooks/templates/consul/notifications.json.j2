@@ -1,0 +1,10 @@
+{
+    "service": {
+        "name": "notifications",
+        "port": 80,
+        "address" : "{{ hostvars['notifications'].ansible_host }}",
+        "connect": {
+            "sidecar_service": {}
+        }
+    }
+}
