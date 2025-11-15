@@ -1,0 +1,31 @@
+- name: main playbook
+  hosts: iis
+  gather_facts: no
+  collections:
+   - ansible.windows
+
+  vars_files:
+     - "{{customer_data_dir}}/iis/iis-firewall-rules.yaml"
+  
+  tasks:
+    - name: Add firewall rules from variable list (port)
+      ansible.windows.win_shell: |
+        New-NetFirewallRule -DisplayName "{{ item.name }}" -Direction "{{ item.direction }}" -LocalPort {{ item.port }} -Protocol {{ item.protocol }} -Action Allow -Enabled True -Profile Any
+      loop: "{{ firewall_rules }}"
+
+    - name: Add firewall rules from variable list (program)
+      ansible.windows.win_shell: |
+        New-NetFirewallRule -DisplayName "{{ item.name }}" -Direction "{{ item.direction }}" -Program "{{ item.program }}"  -Action Allow -Enabled True -Profile Any
+      loop: "{{ firewall_program_rule }}"
+
+    - name: Enable File and Printer Sharing firewall rules
+      ansible.windows.win_shell: |
+        Set-NetFirewallRule -DisplayGroup "File and Printer Sharing" -Enabled True
+
+    - name: Enable all firewall rules in the group "Distributed Transaction Coordinator"
+      ansible.windows.win_shell: |
+        Set-NetFirewallRule -DisplayGroup "Distributed Transaction Coordinator" -Enabled True
+
+    - name: Set the profiles to Domain, Private, Public
+      ansible.windows.win_shell: |
+        Get-NetFirewallRule -DisplayGroup "Distributed Transaction Coordinator" | Set-NetFirewallRule -Profile Domain,Private,Public

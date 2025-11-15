@@ -1,0 +1,29 @@
+- name: Create app pools
+  hosts: iis 
+  gather_facts: no
+  collections:
+    - ansible.windows
+ 
+  vars_files:
+     - "{{customer_data_dir}}common/domain-common-vars.yaml"
+     - "{{ipack}}/iis/playbooks/vars/iis-install.yaml"
+
+
+  tasks:
+     - name: replace data source hostname
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{apppools_file}}"
+         regexp:  'userName\s*=\s*"\s*"' 
+         replace: 'userName="{{ domain_short_name }}\{{ DevServiceUser }}"'
+
+     - name: replace data source password
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+          file_path: "{{apppools_file}}"
+          regexp:  'password\s*=\s*"\s*"' 
+          replace: 'password="{{DevServiceUser_password}}"'
+
+     - name: Execute PowerShell script with parameter
+       ansible.windows.win_shell: |
+         & '{{ import_pools_script_path }}' -ImportFile '{{ apppools_file }}'

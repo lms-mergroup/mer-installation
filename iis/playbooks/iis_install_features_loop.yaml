@@ -1,0 +1,51 @@
+- name: Install IIS features from XML and reboot if needed
+  hosts: iis
+  gather_facts: no
+  collections:
+    - ansible.windows
+
+  vars_files:
+    - "{{ customer_data_dir }}/iis-common-vars.yaml"
+  
+  vars:
+    max_retries: 5
+  
+  tasks:
+    - name: Install features from XML until reboot not required
+      block:
+        - name: Install IIS features
+          ansible.windows.win_shell: |
+            $features = Import-Clixml -Path "{{ iis_features_xml }}"
+            $restartNeeded = $false
+ 
+            Write-Host "---- Installation loop  ----"
+         
+            foreach ($feature in $features) {
+               Write-Host "Processing feature: $($feature.Name)"
+               $result = Add-WindowsFeature $feature.Name
+               Write-Host "RestartNeeded value: $($result.RestartNeeded)"
+               if ($result.RestartNeeded.ToString().ToLower() -eq 'yes') {
+                  $restartNeeded = $true
+               }
+               Write-Host "restartNeeded value: $($restartNeeded)"
+            }
+ 
+            if ($restartNeeded) {
+               Write-Host "REBOOT_REQUIRED" 
+            } else {
+               Write-Host "INSTALL_DONE"
+            }
+          register: feature_install
+          changed_when: "'REBOOT_REQUIRED' in feature_install.stdout"
+        - name: Debug feature_install stdout lines
+          debug:
+            var: feature_install.stdout_lines
+ 
+          until: "'INSTALL_DONE' in feature_install.stdout"
+          retries: "{{ max_retries }}" 
+          
+        - name: Reboot if needed
+          ansible.windows.win_reboot:
+          when: "'REBOOT_REQUIRED' in feature_install.stdout"
+
+             

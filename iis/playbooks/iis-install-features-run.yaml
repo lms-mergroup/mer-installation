@@ -1,0 +1,15 @@
+- name: Run IIS installation tasks until install done
+  hosts: iis
+  gather_facts: no
+  vars:
+    max_retries: 3
+    delay_between_retries: 5
+
+  tasks:
+    - name: Run IIS insatll features task with retries
+      block:
+        - include_tasks: iis-install-features-task.yaml
+      register: install_result
+      until: "'INSTALL_DONE' in install_result.stdout"
+      retries: "{{ max_retries }}"
+      delay: "{{ delay_between_retries }}"

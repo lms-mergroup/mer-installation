@@ -1,0 +1,15 @@
+hostname: "{{hostvars['iis'].host_name }}"
+dotnet5017_source: '{{ipack}}/iis/add-ons/dotnet-hosting-5.0.17-win.exe'
+dotnet7020_source: '{{ipack}}/iis/add-ons/dotnet-hosting-7.0.20-win.exe'
+dotnet_path: 'C:\Users\azureadmin\Downloads'
+dotnet5017_name: 'dotnet-hosting-5.0.17-win.exe'
+dotnet7020_name: 'dotnet-hosting-7.0.20-win.exe'
+SMNG_source_zip_file: '{{ipack}}/iis/packages/SMNG.zip'
+SMNG_zip_dest_dir: 'C:\Users\azureadmin\Downloads'
+win_smng_zip_file: 'C:\Users\azureadmin\Downloads\smng.zip'
+SMNG_dest_dir: 'c:\SMNG'
+source_win_install_dir: '{{ipack}}/iis/scripts/WindowsInstallation'
+dest_win_install_dir: 'C:\mer\'
+iis_features_xml: 'C:\mer\WindowsInstallation\features.xml'
+
+

@@ -1,0 +1,50 @@
+- name: IIS Update web.config file
+  hosts: iis 
+  gather_facts: no
+  collections:
+    - ansible.windows
+ 
+  vars_files:
+     - "{{customer_data_dir}}common/domain-common-vars.yaml"
+     - "{{ipack}}/iis/playbooks/vars/iis-install.yaml"
+     - "{{ipack}}/iis/playbooks/vars/iis-common-vars.yaml"
+
+
+
+  tasks:
+     - name: replace data source hostname
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{web_config_file}}"
+         regexp:  '(Data Source=)[^;]+'
+         replace: '$1{{hostvars["sql"].host_name}}'
+
+     - name: set serviceCredentials 
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{web_config_file}}"
+         regexp:  '(findValue=")[^"]+(")' 
+         replace: '$1{{hostname}}.{{domain_name}}$2'
+
+     - name: set user Principal name 
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{web_config_file}}"
+         regexp:  '(<userPrincipalName\s+value=")[^"]*(")' 
+         replace: '$1{{DevServiceUser}}@{{domain_name}}$2'
+
+     - name: set behavior scopes 
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{web_config_file}}"
+         regexp:  '(<scopes>\s*<add\s+scope=")[^"]*(")' 
+         replace: '$1http://localhost.{{domain_name}}$2'
+
+     - name: set serviceCertificate findValue 
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{web_config_file}}"
+         regexp:  '(serviceCertificate findValue=")[^"]+(")' 
+         replace: '$1{{hostname}}.{{domain_name}}$2'
+
+

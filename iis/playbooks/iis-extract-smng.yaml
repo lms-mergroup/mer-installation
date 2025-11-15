@@ -1,0 +1,14 @@
+- name: Extract SMNG directories
+  hosts: iis
+  gather_facts: no
+  collections:
+    - ansible.windows
+ 
+  vars_files:
+   - "{{ipack}}/iis/playbooks/vars/iis-common-vars.yaml"
+
+
+  tasks:
+    - name: Extract SMNG zip file
+      ansible.windows.win_shell: |
+        Expand-Archive -Path "{{ win_smng_zip_file }}" -DestinationPath "{{ SMNG_dest_dir }}" -Force

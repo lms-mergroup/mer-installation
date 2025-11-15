@@ -1,0 +1,20 @@
+- name: IIS Default Web site set SSL settings "Accept"
+  hosts: iis 
+  gather_facts: no
+  collections:
+    - ansible.windows
+ 
+  tasks:
+    - name: Unlock access section
+      win_command: C:\Windows\System32\inetsrv\appcmd.exe unlock config /section:system.webServer/security/access
+  
+    - name: Ensure SSL settings are set to "Accept"
+      win_shell: |
+        Import-Module WebAdministration
+        Set-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST/Default Web Site' `
+          -filter "system.webServer/security/access" `
+          -name "sslFlags" `
+          -value "SslNegotiateCert"
+          
+
+

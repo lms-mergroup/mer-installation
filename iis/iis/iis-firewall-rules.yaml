@@ -1,0 +1,36 @@
+# Add firewall port rules
+firewall_rules:
+  - name: "Allow-any-to-iis-443-inbound"
+    port: 443
+    protocol: tcp
+    direction: in
+  - name: "Allow-linux-to-windows-deploy-inbound"
+    port: 5985
+    protocol: tcp
+    direction: in
+  - name: "allow-iis-to-sql-135-outbound"
+    port: 135
+    protocol: tcp
+    direction: out
+  - name: "allow-iis-to-sql-msdtc-ports-outbound"
+    port: "49152-65535"
+    protocol: tcp
+    direction: out
+  - name: "allow-iis-to-valerian-minio-outbound"
+    port: "9000-9001"
+    protocol: tcp
+    direction: out
+  - name: "allow-iis-to-valerian-pg-5432-outbound "
+    port: 5432
+    protocol: tcp
+    direction: out
+  - name: "allow-iis-to-valerian-smb-outbound"
+    port: "445,139"
+    protocol: tcp
+    direction: out
+
+firewall_program_rule:
+  - name: "allow-iis-to-sql-msdtc-program-outbound "
+    program: '%SystemRoot%\System32\msdt.exe'
+    protocol: tcp
+    direction: in
