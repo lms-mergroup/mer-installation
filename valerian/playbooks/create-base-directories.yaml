@@ -1,0 +1,204 @@
+---
+- name: Create BaseVDFSdirPath directory 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+    
+  vars: 
+    tmplts: "templates/create-dirs/"
+    files:  "files/create-dirs/"
+    
+  tasks:
+    - name: Create BaseVDFSdirPath directory
+      file:
+        path: "{{ BaseVDFSDirPath }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create BaseVDFSPath Symbolic link
+      file:
+        src: "{{ BaseVDFSDirPath }}"
+        dest: "{{ BaseVDFSPath }}"
+        state: link
+
+    - name:  NOMAD | create stanzas dir struct
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: 0777
+      loop:
+        - { name: 'logsDir', path: '{{LogsPath}}' }
+        - { name: 'zookeeperc', path: '{{BaseVDFSPath}}/opt/zookeeper/config' }
+        - { name: 'zookeeperd', path: '/opt/zookeeper/datadir' }
+        - { name: 'zookeeperd2', path: '/opt/zookeeper/datadir/version-2' }
+        - { name: 'kafka', path: '/var/lib/kafka/data' }
+        - { name: 'kafkac', path: '{{BaseVDFSPath}}/opt/kafka/config' }
+        - { name: 'kafka_connect_jars', path: '{{BaseVDFSPath}}/opt/kafka-connect/jars/java' }
+        - { name: 'kafka_ksql', path: '{{BaseVDFSPath}}/opt/ksql' }
+        - { name: 'kafka_ksql_server', path: '{{BaseVDFSPath}}/opt/kafka/ksql' }
+        - { name: 'cassandra', path: '{{BaseVDFSPath}}/var/cassandra/data' }
+        - { name: 'postgres', path: '{{BaseVDFSPath}}/opt/postgres/data' }
+        - { name: 'postgis', path: '{{BaseVDFSPath}}/opt/postgis/data' }
+        - { name: 'timescaledb', path: '{{BaseVDFSPath}}/opt/timescaledb' }
+        - { name: 'superset_conf', path: '{{BaseVDFSPath}}/opt/superset/config/' }
+        - { name: 'snitch_logs', path: '{{LogsPath}}/snitch' }
+        - { name: 'snitch_config', path: '{{BaseVDFSPath}}/opt/snitch/config' }
+        - { name: 'action_items', path: '{{BaseVDFSPath}}/opt/action_items/config' }
+        - { name: 'action_items_logs', path: '{{LogsPath}}/action_items' }
+        - { name: 'simba_conf', path: '{{BaseVDFSPath}}/opt/simba/config' }
+        - { name: 'simba_logs', path: '{{LogsPath}}/simba' }
+        - { name: 'pam_conf', path: '{{BaseVDFSPath}}/opt/pam/config'}
+        - { name: 'pam_logs', path: '{{LogsPath}}/pam'}
+        - { name: 'peppa_logs', path: '{{LogsPath}}/peppa'}       
+        - { name: 'peppa_conf', path: '{{BaseVDFSPath}}/opt/peppa/config'}
+        - { name: 'kaizo_logs', path: '{{LogsPath}}/kaizo'}
+        - { name: 'kaizo_conf', path: '{{BaseVDFSPath}}/opt/kaizo/config'} 
+        - { name: 'siddhi_logs', path: '{{LogsPath}}/siddhi'}
+        - { name: 'siddhi_conf', path: '{{BaseVDFSPath}}/opt/siddhi/config' }
+        - { name: 'siddhi_apps', path: '{{BaseVDFSPath}}/opt/siddhi/apps' }
+        - { name: 'redis', path: '{{BaseVDFSPath}}/opt/redis/conf' }
+        - { name: 'mongo_db', path: '{{BaseVDFSPath}}/opt/mongo/db' }
+        - { name: 'mongo_conf', path: '{{BaseVDFSPath}}/opt/mongo/configdb' }
+        - { name: 'metabase', path: '{{BaseVDFSPath}}/opt/metabase' }
+        - { name: 'grafana', path: '{{BaseVDFSPath}}/opt/grafana/conf/' }
+        - { name: 'minio_storage', path: '/root/minio/data' }
+        - { name: 'minio_storage_activities', path: '/root/minio/data/activities' }
+        - { name: 'prometheus', path: '{{BaseVDFSPath}}/opt/monitoring/' }
+        - { name: 'panacea', path: '{{BaseVDFSPath}}/opt/panacea/config' }
+        - { name: 'jasper_logs', path: '{{LogsPath}}/jasper' }
+        - { name: 'jasper_datasource', path: '{{BaseVDFSPath}}/opt/jasperserver/datasources' }
+        - { name: 'jasper_webinf', path: '{{BaseVDFSPath}}/opt/jasperserver/WEB-INF' }
+        - { name: 'jasper_webinf_lib', path: '{{BaseVDFSPath}}/opt/jasperserver/WEB-INF/lib' }
+        - { name: 'jasper_webinf_esapi', path: '{{BaseVDFSPath}}/opt/jasperserver/WEB-INF/classes/esapi' }
+        - { name: 'jasper_metainf', path: '{{BaseVDFSPath}}/opt/jasperserver/META-INF' }
+        - { name: 'zabbix_snmp', path: '{{BaseVDFSPath}}/opt/zabbix/snmptraps' }
+        - { name: 'zabbix_mibs', path: '{{BaseVDFSPath}}/opt/zabbix/share/snmp/mibs' }
+        - { name: 'zabbix_alertscripts', path: '{{BaseVDFSPath}}/opt/zabbix/alertscripts' }
+        - { name: 'zabbix_ssl', path: '{{BaseVDFSPath}}/opt/zabbix/etc/ssl/apache2' }
+        - { name: 'logstash_config', path: '{{BaseVDFSPath}}/opt/logstash/config' }
+        - { name: 'logstash_plugins', path: '{{BaseVDFSPath}}/opt/logstash/lib/pluginmanager/' }
+        - { name: 'logstash_pipeline', path: '{{BaseVDFSPath}}/opt/logstash/pipeline' }
+        - { name: 'logstash_pipeline_examples', path: '{{BaseVDFSPath}}/opt/logstash/pipeline_examples' }
+        - { name: 'logstash_driver', path: '{{BaseVDFSPath}}/opt/logstash/driver' }
+        - { name: 'viisights_logs', path: '{{LogsPath}}/viisights' }
+        - { name: 'viisights_app', path: '{{BaseVDFSPath}}/opt/viisights/app' }
+        - { name: 'risconnect_logs', path: '{{LogsPath}}/risconnect' }
+        - { name: 'risconnect_app', path: '{{BaseVDFSPath}}/opt/risconnect/app' }
+        - { name: 'okazas_logs', path: '{{LogsPath}}/okazas' }
+        - { name: 'okazas_app', path: '{{BaseVDFSPath}}/opt/okazas/app' }
+        - { name: 'clio_logs', path: '{{LogsPath}}/clio' }
+        - { name: 'clio_apps', path: '{{BaseVDFSPath}}/opt/clio/app' }
+        - { name: 'mikado_app', path: '{{BaseVDFSPath}}/opt/mikado/app' }
+        - { name: 'mikado_logs', path: '{{LogsPath}}/mikado' }
+        - { name: 'anyvision_logs', path: '{{LogsPath}}/anyvision' }
+        - { name: 'anyvision_app', path: '{{BaseVDFSPath}}/opt/anyvision/app' } 
+        - { name: 'davantis_logs', path: '{{LogsPath}}/davantis' }
+        - { name: 'davantis_app', path: '{{BaseVDFSPath}}/opt/davantis/app' }  
+        - { name: 'united_logs', path: '{{LogsPath}}/united' }
+        - { name: 'united_app', path: '{{BaseVDFSPath}}/opt/united/app' } 
+        - { name: 'gallagher_logs', path: '{{LogsPath}}/gallagher' }
+        - { name: 'gallagher_app', path: '{{BaseVDFSPath}}/opt/gallagher/app' } 
+        - { name: 'cawamo_logs', path: '{{LogsPath}}/cawamo' }
+        - { name: 'cawamo_app', path: '{{BaseVDFSPath}}/opt/cawamo/app' }         
+        - { name: 'findface_logs', path: '{{LogsPath}}/findface' }
+        - { name: 'findface_app', path: '{{BaseVDFSPath}}/opt/findface/app' }   
+        - { name: 'itto_logs', path: '{{LogsPath}}/itto' }  
+        - { name: 'itto_app', path: '{{BaseVDFSPath}}/opt/itto/app' }      
+        - { name: 'urbandigital_logs', path: '{{LogsPath}}/urbandigital' }
+        - { name: 'urbandigital_app', path: '{{BaseVDFSPath}}/opt/urbandigital/app' }   
+        - { name: 'nelysis_logs', path: '{{LogsPath}}/nelysis' }
+        - { name: 'nelysis_app', path: '{{BaseVDFSPath}}/opt/nelysis/app' }   
+        - { name: 'zabbix_logs', path: '{{LogsPath}}/zabbix' }
+        - { name: 'zabbix_app', path: '{{BaseVDFSPath}}/opt/zabbix/app' }   
+        - { name: 'agrolan_logs', path: '{{LogsPath}}/agrolan' }
+        - { name: 'agrolan_app', path: '{{BaseVDFSPath}}/opt/agrolan/app' } 
+        - { name: 'arad_logs', path: '{{LogsPath}}/arad' } 
+        - { name: 'arad_app', path: '{{BaseVDFSPath}}/opt/arad/app' }  
+        - { name: 'aqua_logs', path: '{{LogsPath}}/aqua' } 
+        - { name: 'aqua_app', path: '{{BaseVDFSPath}}/opt/aqua/app' } 
+        - { name: 'agam_logs', path: '{{LogsPath}}/agam' } 
+        - { name: 'agam_app', path: '{{BaseVDFSPath}}/opt/agam/app' } 
+        - { name: 'magos_logs', path: '{{LogsPath}}/magos' } 
+        - { name: 'magos_app', path: '{{BaseVDFSPath}}/opt/magos/app' } 
+        - { name: 'xhuma_logs', path: '{{LogsPath}}/xhuma' } 
+        - { name: 'xhuma_app', path: '{{BaseVDFSPath}}/opt/xhuma/app' } 
+        - { name: 'suprema_logs', path: '{{LogsPath}}/suprema' } 
+        - { name: 'suprema_app', path: '{{BaseVDFSPath}}/opt/suprema/app' }
+        - { name: 'desigo_logs', path: '{{LogsPath}}/desigo' }
+        - { name: 'desigo_app', path: '{{BaseVDFSPath}}/opt/desigo/app' }
+        - { name: 'tyco_logs', path: '{{LogsPath}}/tyco' } 
+        - { name: 'tyco_app', path: '{{BaseVDFSPath}}/opt/tyco/app' } 
+        - { name: 'tyco_excel_files', path: '{{BaseVDFSPath}}/opt/tyco/app/files' } 
+        - { name: 'swilco_logs', path: '{{LogsPath}}/swilco' } 
+        - { name: 'swilco_app', path: '{{BaseVDFSPath}}/opt/swilco/app' } 
+        - { name: 'swilco_excel_files', path: '{{BaseVDFSPath}}/opt/swilco/app/files' } 
+        - { name: 'pulsar_conf', path: '{{BaseVDFSPath}}/opt/pulsar/config' }
+        - { name: 'pulsar_logs', path: '{{LogsPath}}/pulsar' }
+        - { name: 'g1_logs', path: '{{LogsPath}}/g1' } 
+        - { name: 'g1_app', path: '{{BaseVDFSPath}}/opt/g1/app/files' } 
+        - { name: 'simplex_logs', path: '{{LogsPath}}/simplex' }
+        - { name: 'simplex_app', path: '{{BaseVDFSPath}}/opt/simplex/app' } 
+        - { name: 'simplex_files', path: '{{BaseVDFSPath}}/opt/simplex/app/files' }
+        - { name: 'netiot_logs', path: '{{LogsPath}}/netiot' }
+        - { name: 'netiot_app', path: '{{BaseVDFSPath}}/opt/netiot/app' } 
+        - { name: 'xls_logs', path: '{{LogsPath}}/xls' }
+        - { name: 'xls_app', path: '{{BaseVDFSPath}}/opt/xls/app' } 
+        - { name: 'xls_files', path: '{{BaseVDFSPath}}/opt/xls/app/files' }
+
+    - name:  NOMAD | create zookeeper log directories for cluster
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: 0777
+      loop:
+        - { name: 'zookeeper_logs_vc01', path: "{{LogsPath}}/zookeeper/{{hostvars['valerian_c01']['name']}}" }
+        - { name: 'zookeeper_logs_vc02', path: "{{LogsPath}}/zookeeper/{{hostvars['valerian_c02']['name']}}" }
+        - { name: 'zookeeper_logs_vc03', path: "{{LogsPath}}/zookeeper/{{hostvars['valerian_c03']['name']}}" }
+      when: hostvars['valerian_c01'] is defined
+
+    - name:  NOMAD | create kafka  log directories for cluster
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: '755'
+      loop:
+        - { name: 'kafka_logs_vc01', path: "{{LogsPath}}/kafka/{{hostvars['valerian_c01']['name']}}/data" }
+        - { name: 'kafka_logs_vc02', path: "{{LogsPath}}/kafka/{{hostvars['valerian_c02']['name']}}/data" }
+        - { name: 'kafka_logs_vc03', path: "{{LogsPath}}/kafka/{{hostvars['valerian_c03']['name']}}/data" }
+      when: hostvars['valerian_c01'] is defined
+
+    - name:  NOMAD | create zookeeper log directories for tiny
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: 0777
+      loop:
+        - { name: 'zookeeper_logs_vc01', path: "{{LogsPath}}/zookeeper/{{hostvars['valerian']['name'] }}" }
+      when: hostvars['valerian'] is defined
+
+    - name:  NOMAD | create kafka log directories for tiny
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: '755'
+      loop:
+        - { name: 'kafka_logs_vc01', path: "{{LogsPath}}/kafka/{{hostvars['valerian']['name'] }}/data" }
+      when: hostvars['valerian'] is defined
+
+    - name: COPY | Copy java apps log config files
+      copy: src={{ item.src }} dest={{ item.dest }}
+      with_items:
+        - { src: '{{files}}kaizo_logback.xml', dest: '{{BaseVDFSPath}}/opt/kaizo/config/logback.xml'}
+        - { src: '{{files}}peppa_logback.xml', dest: '{{BaseVDFSPath}}/opt/peppa/config/logback.xml'}
+        - { src: '{{files}}pam_logback.xml', dest: '{{BaseVDFSPath}}/opt/pam/config/logback.xml'}  
+        - { src: '{{files}}siddhi_log4j2.xml', dest: '{{BaseVDFSPath}}/opt/siddhi/config/log4j2.xml'}  
+
+     

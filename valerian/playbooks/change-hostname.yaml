@@ -1,0 +1,33 @@
+- name: change hostname 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+    
+  tasks:
+    - name: checking if cloud.cfg exists
+      ansible.builtin.stat:
+        path: /etc/cloud/cloud.cfg
+      register: cloudcfg
+
+    - name: Set preserve_hostname true in cloud-init
+      ansible.builtin.lineinfile:
+        path: /etc/cloud/cloud.cfg
+        regexp: '^(\s*)preserve_hostname:'
+        line: 'preserve_hostname: true'
+        backup: no
+      when: cloudcfg.stat.exists
+      
+    - name: Set hostname 
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"    
+   
+    - name: Update /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.0\.1\s+'
+        line: "127.0.0.1 {{ hostname }}.{{domain_name}} {{ hostname }}"
+        state: present 

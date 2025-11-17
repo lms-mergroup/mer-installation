@@ -1,0 +1,70 @@
+---
+- name: change hostname 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+    - "{{ customer_data_dir }}/install-consul-vars.yaml"
+    
+  vars: 
+    tmplts: "templates/consul/"
+    
+  tasks:
+  
+ 
+    - name: Create Consul /etc/consul.d directory
+      file:
+        path: '{{ user_home }}'
+        owner: root
+        group: root
+        state: directory  
+
+    - name: Consul server file in /etc/consul.d/
+      template:
+        src: "{{tmplts}}consul_server.j2"
+        dest: '{{ consul_server_file }}'
+      when: "'masters' in group_names or hostvars['valerian'] is defined"
+
+    - name: Consul agent file in /etc/consul.d/
+      template:
+        src: "{{tmplts}}consul_agent.j2"
+        dest: '{{ consul_agent_file }}'
+
+    - name: Consul encryption file in /etc/consul.d/
+      template:
+        src: "{{tmplts}}consul_encrypt.j2"
+        dest: '{{ consul_encrypt_file }}'
+
+    - name: Set IIS and mssql servers in consul
+      template: 
+        src: "{{ item.src }}" 
+        dest: "{{ item.dest }}" 
+        mode: 0644 
+        owner: root
+      with_items:
+        - { src: "{{tmplts}}mssql.json.j2", dest: "{{ user_home }}/mssql.json" }
+        - { src: "{{tmplts}}notifications.json.j2", dest: "{{ user_home }}/notifications.json" }
+        - { src: "{{tmplts}}signalr.json.j2", dest: "{{ user_home }}/signalr.json" }
+        - { src: "{{tmplts}}gis.json.j2", dest: "{{ user_home }}/gis.json" }
+
+    - name: Enable and start consul service
+      service:
+        name: consul.service
+        daemon_reload: yes
+        state: restarted
+        enabled: yes
+
+    - name: Check if Consul service started successfully
+      ansible.builtin.stat:
+         path: "{{ consul_path }}"
+      register: service_started
+
+    - name: CONSUL_KV | Import KV from backup taken before upgrade
+      shell: consul kv import @{{ consul_kv_file_path }}/kv_backup_{{ lookup('pipe', 'date +%Y_%m_%d') }}.json
+      when: "service_started.stat.exists and results.changed and (hostvars['valerian'] is defined or inventory_hostname == 'valerian')"
+      #when: "service_started.stat.exists and results.changed and results.stdout is not search(consul_version | string) and (hostvars['tiny-valerian'] is defined or inventory_hostname == 'valerian_c01')"
+      #consider changing to commented line - to import KV anyway if consul already exists and is tiny/client1 - and KV backup done + KV data removed!
+

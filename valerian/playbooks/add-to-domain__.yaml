@@ -1,0 +1,23 @@
+- name: Add to domain 
+  hosts: valerian
+  become: yes
+  become_user: root   
+  
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+    
+  tasks:
+    - name: Join Linux host to AD domain
+      ansible.builtin.command: >
+        realm join --verbose {{ domain_name }}
+        -U {{ domain_user }}@{{domain_name}}
+        --install=/
+      args:
+        stdin: "{{ domain_pass }}"
+      register: join_result
+      changed_when: "'already joined' not in join_result.stdout"
+
+    - name: Show result
+      debug:
+        var: join_result.stdout

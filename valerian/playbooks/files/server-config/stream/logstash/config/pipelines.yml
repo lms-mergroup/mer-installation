@@ -1,0 +1,17 @@
+  
+# This file is where you define your pipelines. You can define multiple.
+# For more information on multiple pipelines, see the documentation:
+#   https://www.elastic.co/guide/en/logstash/current/multiple-pipelines.html
+
+
+#- pipeline.id: anyvision_mongodb
+#  path.config: "/usr/share/logstash/pipeline/logstash_anyvision_mongodb.conf"
+#  pipeline.workers: 1
+
+#- pipeline.id: egat_db_anyvision
+#  path.config: "/usr/share/logstash/pipeline/logstash_egat_db_anyvision.conf"
+#  pipeline.workers: 1
+
+#- pipeline.id: egat_db_findface
+#  path.config: "/usr/share/logstash/pipeline/logstash_egat_db_findface.conf"
+#  pipeline.workers: 1

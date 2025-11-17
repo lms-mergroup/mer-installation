@@ -1,0 +1,25 @@
+- name: Allow root login in sshd_config
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost
+  
+  tasks:
+    - name: Update PermitRootLogin in sshd_config
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin yes'
+        state: present
+        backrefs: yes
+    
+    - name: Clean authorized_keys (remove text before ssh-rsa)
+      ansible.builtin.replace:
+        path: /root/.ssh/authorized_keys
+        regexp: '.*?(ssh-rsa.*)'
+        replace: '\1'
+
+    - name: Restart SSH service
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
+

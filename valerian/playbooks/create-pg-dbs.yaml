@@ -1,0 +1,66 @@
+- name: create pg DB's
+  hosts: iis
+  gather_facts: no
+  collections:
+   - ansible.windows
+   
+  vars_files:
+     - "{{customer_data_dir}}/domain-common-vars.yaml"
+     - "{{customer_data_dir}}/valerian-server-common-vars.yaml"
+
+  vars:
+    db_host: "{{hostvars['valerian'].host_name}}"
+    db_port: 5432
+ 
+
+  tasks:
+    - name: Show full path of the variable file
+      ansible.builtin.debug:
+        msg: "Loading vars from {{ customer_data_dir }}"
+ 
+    - name: Try to connect to PostgreSQL (up to 5 times)
+      win_shell: |
+        Test-NetConnection -ComputerName "{{ db_host }}" -Port {{ db_port }} | Select-Object -ExpandProperty TcpTestSucceeded
+      register: pg_port
+      retries: 5
+      delay: 5
+      until: pg_port.stdout.find("True") != -1
+      changed_when: false
+      ignore_errors: true
+
+    - name: Fail if PostgreSQL is not reachable
+      fail:
+        msg: "❌ PostgreSQL server not reachable on port {{ db_port }} after 5 retries."
+      when: pg_port.stdout.find("True") == -1
+
+    - name: Continue if PostgreSQL reachable
+      debug:
+        msg: "✅ PostgreSQL server port {{ db_port }} is reachable!"
+      when: pg_port.stdout.find("True") != -1
+ 
+    - name: Create MauiDB
+      ansible.windows.win_shell: |
+          & '{{ db_updater_path }}'  --silent --db-type postgres --pg-database MauiDB
+      args:
+         chdir: 'C:\SMNG\DBUpdater'
+         executable: powershell
+      ignore_errors: true
+      become: yes
+      become_method: runas
+      become_user: '{{domain_short_name}}\{{DevServiceUser}}'                      
+      vars:
+        ansible_become_password: "{{DevServiceUser_password}}"                     
+ 
+    - name: Create jasperserver
+      ansible.windows.win_shell: |
+          & '{{ db_updater_path }}'  --silent --db-type postgres --pg-database jasperserver
+      args:
+         chdir: 'C:\SMNG\DBUpdater'
+         executable: powershell
+      ignore_errors: true
+      become: yes
+      become_method: runas
+      become_user: '{{domain_short_name}}\{{DevServiceUser}}'                      
+      vars:
+        ansible_become_password: "{{DevServiceUser_password}}"
+

@@ -1,0 +1,27 @@
+- name: change hostname 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+  vars: 
+    tmplts: "templates/onsite-prerequisite/"
+ 
+  tasks:
+# Create insecure registry file
+
+    - name: Create insecure registry file
+      template:
+        src: '{{tmplts}}daemon.json.j2'
+        dest: '/etc/docker/daemon.json'
+
+    - name: reload systemctl services
+      command: systemctl daemon-reload
+
+    - name: restart docker service
+      service:
+        name: docker.service
+        state: restarted
+        enabled: yes

@@ -1,0 +1,101 @@
+---
+- name: Join host to AD 
+  hosts: valerian
+  become: yes
+
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+
+  vars:
+    domain_upper: "{{ domain_name | upper }}"
+    domain_lower: "{{ domain_name | lower }}"
+    computer_name: "{{ hostname | default(inventory_hostname_short) | upper }}"
+
+  tasks:
+    - name: checking if resolved.conf exists
+      ansible.builtin.stat:
+        path: /etc/systemd/resolved.conf
+      register: resolvedcfg
+      
+    - name: Set DNS servers in systemd-resolved
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^(\s*)#DNS='
+        line: 'DNS={{ dns_servers }}'
+        backup: no
+      when: resolvedcfg.stat.exists
+      
+    - name: Add Domain to systemd-resolved
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^(\s*)#Domains'
+        line: 'Domains=~. {{ domain_name | lower }}'
+        backup: no
+      when: resolvedcfg.stat.exists
+      
+    - name: restart systemd-resolved service
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: restarted
+      
+    - name: Preseed krb5 default realm
+      ansible.builtin.debconf:
+        name: krb5-config
+        question: krb5-config/default_realm
+        value: "{{ domain_upper }}"
+        vtype: string
+
+    - name: Install packages (noninteractive)
+      ansible.builtin.apt:
+        
+        name: "{{ (krb_required_packages | default([])) | union(['adcli','krb5-user']) | unique }}"
+        state: present
+        update_cache: yes
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Write minimal /etc/krb5.conf
+      ansible.builtin.copy:
+        dest: /etc/krb5.conf
+        mode: "0644"
+        content: |
+          [libdefaults]
+            default_realm = {{ domain_upper }}
+            dns_lookup_kdc = true
+            dns_lookup_realm = true
+            canonicalize = true
+            rdns = false
+            dns_canonicalize_hostname = false
+          includedir /var/lib/realmd
+
+    - name: Join to AD using adcli (DNS discovery; password via stdin)
+      ansible.builtin.command: >
+        adcli join
+        --domain={{ domain_upper }}
+        --domain-realm={{ domain_upper }}
+        --login-user={{ domain_user }}
+        --computer-name={{ computer_name }}
+        {% if computer_ou is defined %} --domain-ou="{{ computer_ou }}" {% endif %}
+        --stdin-password
+      args:
+        stdin: "{{ domain_pass }}"
+      no_log: false
+      
+    - name: Register existing join with realmd so `realm list` is populated
+      ansible.builtin.expect:
+        command: >
+          realm join {{ domain_lower }}
+          -U {{ domain_user }}@{{ domain_lower }}
+          --verbose
+        responses:
+          '(?i)Password for .*:': "{{ domain_pass }}"
+        timeout: 180
+      no_log: false
+      ignore_errors: true           
+
+    - name: Ensure SSSD is running
+      ansible.builtin.service:
+        name: sssd
+        state: started
+        enabled: true

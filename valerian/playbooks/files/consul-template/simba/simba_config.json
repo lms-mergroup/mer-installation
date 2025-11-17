@@ -1,0 +1,100 @@
+{
+  "production": {
+    "snitch": {
+      "consul": {
+        "address": "consul.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:8500",
+        "port": 8500
+      },
+      "kafka": {
+        "address": "kafka.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:29092",
+        "topics": {
+          "error": "snitch_error",
+
+          "default": "snitch_error"
+        }
+      },
+      "messages": {
+        "RogueMessage": "Rogue",
+        "SnitchMessage": "Snitch"
+      }
+    },
+    "kafkaServer": {
+      "server": "kafka.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:29092"
+
+    },
+
+    "eventHandling": {
+      "timeout": 5000,
+      "IsAgentsOn": false
+
+    },
+    "mongoDb": {
+      "urlServiceAction": "mongodb://admin:password@mongodb.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:27017/SMNG?authSource=admin"
+    },
+    "sqlServer": {
+      "config": {
+        "user": "{{key "valerian 1.0/cluster config/datasources/mssql/adminuser"}}",
+        "domain": "{{key "valerian 1.0/cluster config/datasources/mssql/domain"}}",
+        "password": "{{key "valerian 1.0/cluster config/datasources/mssql/adminpass"}}",
+        "server": "{{key "valerian 1.0/cluster config/datasources/mssql/host"}}",
+        "database": "smng.data",
+        "options": {
+          "useUTC": false
+        },
+        "pool": {
+          "max": 100,
+          "min": 1,
+          "idleTimeoutMillis": 30000
+        }
+      }
+    },
+       "ExternalsqlServer": {
+        "config": {
+          "user": "{{key "valerian 1.0/cluster config/datasources/mssql/adminuser"}}",
+          "domain": "{{key "valerian 1.0/cluster config/datasources/mssql/domain"}}",
+          "password": "{{key "valerian 1.0/cluster config/datasources/mssql/adminpass"}}",
+          "server": "{{key "valerian 1.0/cluster config/datasources/mssql/host"}}",
+          "database": "smng.External",
+          "options": {
+            "useUTC": false
+          },
+          "pool": {
+            "max": 100,
+            "min": 1,
+            "idleTimeoutMillis": 30000
+          }
+        }
+      },
+
+    "notificationServer": {
+      "server": "{{key "valerian 1.0/external services/notification server/address"}}"
+    }, 
+    "webApiServer": {
+      "url": "https://{{key "valerian 1.0/cluster config/site-definition/siteDNSName"}}:{{key "valerian 1.0/external services/webapiserver/url"}}",
+      "enable": "{{key "valerian 1.0/external services/webapiserver/enable"}}",
+      "XApiKey":"C74775B0-4B39-4206-91C8-5BF78860A9E1"
+    }, 
+    "gisServer": {
+      "username": "{{key "valerian 1.0/cluster config/datasources/mssql/adminuser"}}",
+      "password": "{{key "valerian 1.0/cluster config/datasources/mssql/adminpass"}}",
+      "ntlm_domain": "{{key "valerian 1.0/cluster config/datasources/mssql/domain"}}",
+      "url": "http://{{key "valerian 1.0/external services/gis server/address"}}/GISServer/Web/GeoService.svc/rest/services/"
+    },
+    "actionItemsServerUrl": {
+      "server": "http://actionitems.service.{{ range datacenters }}{{.}}{{end}}.valerian:8088/api/Jobs"
+
+    },
+    "Okazas":{
+        "base":"http://okazas.service.{{ range datacenters }}{{.}}{{end}}.valerian:9560",
+        "insert": "/api/ActiveEvents",
+        "enable": true
+    },
+    "Redis": {
+      "config": {
+        "password": "{{key "valerian 1.0/cluster config/datasources/redis/password"}}",
+        "hostName": "{{key "valerian 1.0/cluster config/datasources/redis/host"}}",
+        "port": "{{key "valerian 1.0/cluster config/datasources/redis/port"}}"
+      }
+    }
+  }
+}

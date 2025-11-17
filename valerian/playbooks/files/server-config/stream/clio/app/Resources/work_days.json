@@ -1,0 +1,47 @@
+[
+  {
+    "day_of_week": "Sunday",
+    "range_times": [
+      {
+        "start_service_time": "08:00:00",
+        "end_service_time": "17:00:00"
+      }
+    ]
+  },
+  {
+    "day_of_week": "Monday",
+    "range_times": [
+      {
+        "start_service_time": "08:00:00",
+        "end_service_time": "17:00:00"
+      }
+    ]
+  },
+  {
+    "day_of_week": "Tuesday",
+    "range_times": [
+      {
+        "start_service_time": "08:00:00",
+        "end_service_time": "17:00:00"
+      }
+    ]
+  },
+  {
+    "day_of_week": "Wednesday",
+    "range_times": [
+      {
+        "start_service_time": "08:00:00",
+        "end_service_time": "17:00:00"
+      }
+    ]
+  },
+  {
+    "day_of_week": "Thursday",
+    "range_times": [
+      {
+        "start_service_time": "08:00:00",
+        "end_service_time": "17:00:00"
+      }
+    ]
+  }
+]

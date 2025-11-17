@@ -1,0 +1,4 @@
+zookeeper_basedir: '/v/opt/zookeeper'
+zookeeper_datadir: '/opt/zookeeper/datadir'
+kafka_folder: '/var/lib/kafka/data'
+kafka_basedir: '/v/opt/kafka'

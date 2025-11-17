@@ -1,0 +1,71 @@
+---
+- name: Install consul KV 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+    - "{{ customer_data_dir }}/kafka-zookeeper-vars.yaml"
+  
+  vars: 
+    tmplts: "templates/kafka-zookeeper/"
+    files: "files/kafka-zookeeper/"
+    
+  tasks:
+
+    - name: FOLDER | zookeeper data dir
+      file:
+        path: '{{zookeeper_datadir}}/data'
+        state: directory
+        #owner: root
+        #group: root
+        mode: 0777
+
+    - name: FILE | zookeeper dirs and config files
+      file:
+        path: '{{zookeeper_datadir}}/myid'
+        state: touch
+        #owner: root
+        #group: root
+        mode: 0777
+        #mode: 01640
+
+    - name: FILE | zkid file
+      template:
+        src: '{{tmplts}}zkid.j2'
+        dest: '/opt/zookeeper/datadir/myid'
+
+    - name: FOLDER | zookeeper config folder
+      file:
+        path: "{{zookeeper_basedir}}/config/"
+        state: directory
+        owner: root
+        group: root
+
+    - name: FILE | zookeeper config file
+      template:
+        src: '{{tmplts}}zoo.cfg.j2'
+        dest: '{{zookeeper_basedir}}/config/zoo.cfg'
+      vars: 
+        nodes: "valerian"
+
+    - name: FILE | zookeeper log4j config
+      copy:
+        src: "{{files}}zookeeper.log4j.properties"
+        dest: '{{zookeeper_basedir}}/config/log4j.properties'
+
+    - name: FOLDER | kafka data folder
+      file:
+        path: '{{kafka_folder}}'
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: '755'
+        recurse: yes
+
+    - name: FILE | kafka log4j config
+      copy: 
+        src: "{{files}}kafka.log4j.properties" 
+        dest: '{{kafka_basedir}}/config/log4j.properties.template'

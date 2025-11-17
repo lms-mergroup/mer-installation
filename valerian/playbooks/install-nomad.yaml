@@ -1,0 +1,188 @@
+---
+- name: Install Nomad 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+    - "{{ customer_data_dir }}/install-nomad-vars.yaml"
+  
+  vars: 
+    tmplts: "templates/nomad/"
+    
+  tasks:
+  
+      # Install and set Nomad
+    - name: Check if nomad service exists
+      stat: path=/etc/systemd/system/nomad.service
+      register: service_status
+
+    - name: Check if Nomad binary exists
+      stat: path={{ nomad_zip_dest }}nomad
+      register: nomad_binary
+
+    - name: Is nomad exists
+      debug:
+        var: nomad_binary
+
+    - name: Get nomad version
+      shell: nomad --version
+      when: nomad_binary.stat.exists
+      register: results
+
+    - name: Print nomad version
+      debug:
+        var: results
+
+    - name: Compare Nomad current version to required version - 1
+      debug:
+        msg: Nomad version is the required version:'{{ nomad_version }}'. Do nothing.
+      when: "results.changed and results.stdout is search(nomad_version | string)"
+
+    - name: Compare Nomad current version to required version - 2
+      debug:
+        msg: Nomad version is NOT the required version:'{{ nomad_version }}'. Going to install the required version.
+      when: "results.changed and results.stdout is not search(nomad_version | string)"
+
+    - name: Run nomad garbage collector
+      shell: nomad system gc
+      when: "nomad_binary.stat.exists and (hostvars['valerian'] is defined or inventory_hostname == 'valerian_c01')"
+
+    - name: STOP SERVICE | stop nomad service
+      service:
+        name: nomad.service
+        state: stopped
+      when: service_status.stat.exists 
+
+    - name: Backup | Generate backup folder name based on current date
+      command: 'date +%Y_%m_%d'
+      register: current_date
+
+    - name: Print current date
+      ansible.builtin.debug:
+        var: current_date
+
+    - name: Backup | Create backup folder
+      file:
+        path: "{{ nomad_backup_dir }}/{{ lookup('pipe', 'date +%Y_%m_%d') }}"
+        state: directory
+
+    - name: Backup | Backup old nomad binary file
+      shell: mv '{{ nomad_zip_dest }}/nomad' '{{ nomad_backup_dir }}/{{current_date.stdout}}/nomad_{{ lookup('pipe', 'date +%Y_%m_%d') }}'
+      when: "results.changed and results.stdout is not search(nomad_version | string) and nomad_binary.stat.exists"
+
+    - name: Check if /opt/nomad directory exists
+      stat: path={{ opt_path }}
+      register: opt_nomad_dir
+    - name: Backup | Backup nomad data in /opt/nomad/ for nomad client/tiny
+      shell: mv {{ opt_path }}/{{ item }} {{ nomad_backup_dir }}/{{current_date.stdout}}/
+      with_items:
+      - client
+      #- alloc
+      when: "results.changed and results.stdout is not search(nomad_version | string) and ('minions' in group_names or hostvars['valerian'] is defined) and opt_nomad_dir.stat.exists"
+
+    - name: Backup | Backup nomad data in /opt/nomad/ for nomad server/tiny
+      shell: mv {{ opt_path }}/{{ item }} {{ nomad_backup_dir }}/{{current_date.stdout}}/
+      with_items:
+      - server
+      when: "results.changed and results.stdout is not search(nomad_version | string) and ('masters' in group_names or hostvars['valerian'] is defined) and opt_nomad_dir.stat.exists"
+
+    - name: Extract Nomad zip to destination
+      unarchive:
+        src: '{{ nomad_zip_src }}'
+        dest: '{{ nomad_zip_dest }}'
+        mode: "0744"
+      when: "(results.changed and results.stdout is not search(nomad_version | string)) or nomad_binary.stat.exists == False"
+
+    - name: Remove nomad data in /opt/nomad/ for nomad client/tiny
+      file:
+        state: absent
+        path: '{{ opt_path }}/{{ item }}'
+      with_items: 
+      #- alloc
+      - client
+      - checkpoint-signature
+      when: "results.changed and results.stdout is not search(nomad_version | string) and ('minions' in group_names or hostvars['valerian'] is defined)"
+
+    - name: Remove nomad data in /opt/nomad/ for nomad server/tiny
+      file:
+        state: absent
+        path: '{{ opt_path }}/{{ item }}'
+      with_items: 
+      - server
+      - checkpoint-signature
+      when: "results.changed and results.stdout is not search(nomad_version | string) and ('masters' in group_names or hostvars['valerian'] is defined)"
+
+    - name: Create Nomad opt directory
+      file:
+        path: '{{ opt_path }}'
+        owner: root
+        group: root
+        state: directory
+
+    - name: Create Nomad logs directory
+      file:
+        path: '{{ opt_path }}/logs'
+        owner: root
+        group: root
+        state: directory
+        
+    - name: Create a Nomad service file    
+      file:
+        path: '{{ service_file }}'
+        state: touch
+        owner: root
+        group: root
+        mode: 01640
+           
+    - name: Create service file
+      template:
+        src: "{{tmplts}}nomad_service.j2"
+        dest: '{{ service_file }}'
+
+    - name: Check if /etc/nomad.d directory exists
+      stat: path=/etc/nomad.d/
+      register: etc_nomad_dir
+
+    - name: Backup | Backup old nomad config file
+      shell: "mv /etc/nomad.d/* {{ nomad_backup_dir }}/{{current_date.stdout}}"
+      when: "etc_nomad_dir.stat.exists"
+      ignore_errors: true
+      
+    - name: Create Nomad /etc/nomad.d directory
+      file:
+        path: '{{ user_home }}'
+        owner: root
+        group: root
+        state: directory
+
+    - name: Nomad server file in /etc/nomad.d/
+      template:
+        src: "{{tmplts}}nomad_server.j2"
+        dest: '{{ nomad_server_file }}'
+      when: "'masters' in group_names or hostvars['valerian'] is defined"
+
+    - name: Nomad client file in /etc/nomad.d/
+      template:
+        src: "{{tmplts}}nomad_client.j2"
+        dest: '{{ nomad_client_file }}'
+      when: "'minions' in group_names or hostvars['valerian'] is defined"
+
+
+    - name: Nomad agent file in /etc/nomad.d/
+      template:
+        src: "{{tmplts}}nomad_agent.j2"
+        dest: '{{ nomad_agent_file }}'
+
+    - name: Enable and start nomad service
+      service:
+        name: nomad.service
+        daemon_reload: yes
+        state: restarted
+        enabled: yes
+
+    - name: Check if Nomad service started successfully
+      stat: path=/etc/systemd/system/nomad.service
+      register: service_started

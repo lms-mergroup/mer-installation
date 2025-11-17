@@ -1,0 +1,93 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning"
+    }
+  },
+  "__Serilog-Configuration": "https://github.com/serilog/serilog-settings-configuration",
+  "__Serilog-FileSink-Configuration": "https://github.com/serilog/serilog-sinks-file",
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Console" ],
+    "MinimumLevel": "Debug",
+    "WriteTo": [
+      { "Name": "Console" },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/mikado.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": null // default: 31 files
+        }
+      }
+    ],    "Enrich": [ "FromLogContext", "WithExceptionDetails" ],
+    "Properties": {
+      "Application": "SmartM.ExternalSource.DataAdapter"
+    }
+  },
+
+  "AdapterSettings": {
+    "DAElementId": "52727E12-F3ED-4D32-801A-D3D747894F26",
+    "DASourceType": "20",
+    "ServiceClientCredentialUserName": "{{key "valerian 1.0/cluster config/site-definition/serviceuser/username"}}",
+    "ServiceClientCredentialPassword": "{{key "valerian 1.0/cluster config/site-definition/serviceuser/password"}}",
+    "ServiceClientCredentialDomain": "{{key "valerian 1.0/cluster config/site-definition/serviceuser/domain"}}",
+    "OutputTopicLocations": "Topic_Locations",
+    "OutputTopicExternalSourceData": "Topic_ModifiedData"
+  },
+  "RedisSettings": {
+    "Host": "{{key "valerian 1.0/cluster config/datasources/redis/host"}}",
+    "Port": "{{key "valerian 1.0/cluster config/datasources/redis/port"}}",
+    "Password": "{{key "valerian 1.0/cluster config/datasources/redis/password"}}"
+  },
+  "Services": {
+    "wsHttp": {
+      "AuthenticationService": {
+        "address": "https://{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}/SMNG/Services/AuthenticationService.svc"
+      },
+      "AdapterManagementService": {
+        "address": "https://{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}/SMNG/Services/AdapterManagementService.svc"
+      },
+      "ElementManagementService": {
+        "address": "https://{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}/SMNG/Services/ElementsManagementService.svc"
+      },
+      "Default": {
+        "dnsIdentity": "{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}",
+        "securityMode": "Transport",
+        "securityClientCredentialType": "Windows",
+        "closeTimeout": "00:10:00",
+        "openTimeout": "00:10:00",
+        "receiveTimeout": "00:10:00",
+        "sendTimeout": "00:10:00",
+        "maxBufferSize": 20524888,
+        "maxReceivedMessageSize": 20524888,
+        "maxDepth": 150,
+        "maxStringContentLength": 20400320,
+        "maxArrayLength": 20524888,
+        "maxBytesPerRead": 16384,
+        "maxNameTableCharCount": 524888
+
+      }
+    },
+    "NetTcp": {
+      "EmployeeService": {
+        "address": "net.tcp://localhost:9118/EmployeeService/",
+        "maxItemsInObjectGraph": 750000
+      },
+      "Default": {
+        "dnsIdentity": "{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}",
+        "closeTimeout": "00:10:00",
+        "openTimeout": "00:10:00",
+        "receiveTimeout": "00:10:00",
+        "sendTimeout": "00:10:00",
+        "maxBufferSize": 20524888,
+        "maxReceivedMessageSize": 20524888,
+        "maxDepth": 150,
+        "maxStringContentLength": 20400320,
+        "maxArrayLength": 20524888,
+        "maxBytesPerRead": 16384,
+        "maxNameTableCharCount": 524888,
+        "securityMode": "None"
+      }
+    }
+  }
+}

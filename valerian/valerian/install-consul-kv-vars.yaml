@@ -1,0 +1,5 @@
+# Create consul opt directory
+consul_kv_file_path: '/v/data/consul_kv/'
+consul_kv_backup_path: '{{consul_kv_file_path}}backup'
+interpolator_src: '{{ipack}}/valerian/packages/{{ interpolator_jar }}'
+interpolator_jar: 'consul-kv-interpolator-0.0.1.jar'

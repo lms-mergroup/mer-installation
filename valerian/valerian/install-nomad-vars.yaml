@@ -1,0 +1,14 @@
+user_shell: '/bin/false'
+user_home: '/etc/nomad.d'
+
+opt_path: '/opt/nomad'
+nomad_backup_dir: '/opt/nomad/backup'
+
+service_file: '/etc/systemd/system/nomad.service'
+nomad_agent_file: '/etc/nomad.d/nomad.hcl'
+nomad_server_file: '/etc/nomad.d/server.hcl'
+nomad_client_file: '/etc/nomad.d/client.hcl'
+
+nomad_version: 'Nomad v1.7.4'
+nomad_zip_src: '{{ipack}}/valerian/packages/nomad_1.7.4_linux_amd64.zip'
+nomad_zip_dest: '/usr/local/bin/'

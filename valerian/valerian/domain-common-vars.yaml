@@ -1,0 +1,11 @@
+domain_name: MERSANDBOX.COM
+domain_user: michaell
+domain_pass: Lms54827
+domain_short_name: "mersandbox"
+DevServiceUser: DevServiceUser
+DevServiceUser_password: "ysTe2eapqW6PVS0fuqZ0"
+sql_smartm_user: "SmartmUser"
+sql_smartm_user_password: "smartm123qwe$2"
+sql_azureadmin_user: "azureadmin"
+domain_controller_fqdn: "W-QCA6E1Q6LS6C8.mersandbox.com"
+dns_servers: "10.4.100.4 10.4.100.5"
