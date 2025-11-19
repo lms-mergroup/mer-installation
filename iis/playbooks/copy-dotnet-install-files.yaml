@@ -1,0 +1,20 @@
+- name: copy dotnet install files
+  hosts: iis
+  gather_facts: no
+  collections:
+   - ansible.windows
+ 
+  vars_files:
+   - "{{ipack}}/iis/playbooks/vars/iis-common-vars.yaml"
+  
+  tasks:
+ 
+    - name: Copy dotnet 5017 file
+      ansible.windows.win_copy:
+        src: "{{dotnet5017_source}}"
+        dest: "{{dotnet_path}}"
+
+    - name: Copy dotnet 7020 file
+      ansible.windows.win_copy:
+        src: "{{dotnet7020_source}}"
+        dest: "{{dotnet_path}}"

@@ -1,0 +1,13 @@
+{
+    "service": {
+        "name": "mssql",
+        "port": 1433,
+        "address" : "{{ hostvars['sql'].ansible_host }}",
+        "connect": {
+            "sidecar_service": {}
+        }
+    }
+}
+
+
+

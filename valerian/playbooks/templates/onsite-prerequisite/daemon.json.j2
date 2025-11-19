@@ -1,0 +1,20 @@
+{
+  "experimental" : false,
+  "debug" : true,
+  
+  "insecure-registries" : [
+    "{{ hostvars['valkyrie'].ansible_host }}:8081",
+    "{{ hostvars['valkyrie'].ansible_host }}:8083",
+    "{{ hostvars['valkyrie'].ansible_host }}:8082",
+    "{{ hostvars['valkyrie'].ansible_host }}",
+    "{{ hostvars['valkyrie'].host_name }}",
+    "{{ hostvars['valkyrie'].host_name }}:8083"
+  ],
+  "dns" : {%if dns_servers_ip is string%}{{dns_servers_ip}}{%else%}["{{dns_servers_ip|list|join('\",\"')}}"]{%endif%},
+  "storage-driver": "overlay2",
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  }
+
+}

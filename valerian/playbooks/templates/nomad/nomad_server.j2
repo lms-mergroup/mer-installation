@@ -1,0 +1,31 @@
+# ----------- Server Configuration -----------
+
+server {
+  enabled = true
+  {% if hostvars['valerian_c01'] is defined %}
+  bootstrap_expect = {{ groups['masters'] | length }}
+  {% elif hostvars['valerian'] is defined %}
+  bootstrap_expect = 1
+  {% endif %}
+
+  job_gc_interval = "5m"
+  job_gc_threshold = "1440m"
+  eval_gc_threshold = "1440m"
+  deployment_gc_threshold = "1440m"
+  node_gc_threshold = "1440m"
+
+  default_scheduler_config {
+    scheduler_algorithm             = "binpack"
+    #memory_oversubscription_enabled = true
+    #reject_job_registration         = false
+    #pause_eval_broker               = false # New in Nomad 1.3.2
+
+    preemption_config {
+      batch_scheduler_enabled    = true
+      system_scheduler_enabled   = true
+      service_scheduler_enabled  = true
+      #sysbatch_scheduler_enabled = true # New in Nomad 1.2
+    }
+  }
+
+}

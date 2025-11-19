@@ -1,0 +1,43 @@
+@App:name("Siddhi_HealthCheck_Luciad")
+@App:description('Consume events from a Kafka Topic - HealthCheck')
+
+--source for CCTV
+@source(type='kafka',
+        topic.list='Topic_HealthCheck_Luciad',
+        partition.no.list='0',
+        threading.option='single.thread',
+        group.id="group",
+              bootstrap.servers='kafka.service.{{datacenter}}.valerian:29092',
+        @map(
+                        type='json', fail.on.missing.attribute='false', enclosing.element="$",
+                        @attributes(
+                                Alive = "Alive"
+                                )
+                        )
+                )
+
+
+define stream SMNGStream_HealthCheck_Luciad_AsJSON(
+                            Alive bool
+);
+
+--At the end we need to insert this info into Kafka again
+@sink(type='kafka',
+      topic='Topic_HealthCheck_Luciad_Timeout',
+bootstrap.servers='kafka.service.{{datacenter}}.valerian:29092',
+      partition.no='0',
+      @map(type='json'))
+
+define stream SMNGStreamEvents(
+                            Source string
+                            );
+
+from every (not SMNGStream_HealthCheck_Luciad_AsJSON for 360 sec)
+select
+    'Luciad' as Source
+insert into SMNGStreamEvents;
+
+
+
+
+

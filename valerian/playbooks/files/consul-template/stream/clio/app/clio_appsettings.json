@@ -1,0 +1,90 @@
+{
+  "Port": "9555",
+  "ConnectionStrings": {
+    "DefaultConnection": "DataSource=app.db; Cache=Shared",
+    "PGContext": "Host={{key "valerian 1.0/cluster config/datasources/postgis/host"}};Database=MauiDB;Username={{key "valerian 1.0/cluster config/datasources/postgis/username"}};Password={{key "valerian 1.0/cluster config/datasources/postgis/password"}}",
+	"SMNGDWContext": "data source={{key "valerian 1.0/cluster config/datasources/mssql/host"}};initial catalog=SMNG.DW;User Id={{key "valerian 1.0/cluster config/datasources/mssql/localuser"}};Password={{key "valerian 1.0/cluster config/datasources/mssql/localpass"}}"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "Microsoft": "None",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.File" ],
+    "MinimumLevel": "Debug",
+    "WriteTo": [
+      { "Name": "Console" },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/clio.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": null // default: 31 files
+        }
+      }
+    ],
+    "Enrich": [ "FromLogContext", "WithExceptionDetails" ],
+    "Properties": {
+      "Application": " Mer.SmartM.WebAPI.ActivityHistory"
+    }
+  },
+  "ServicesConfigurationSettings": {
+    "ServiceClientCredentialUserName": "{{key "valerian 1.0/cluster config/site-definition/serviceuser/username"}}",
+    "ServiceClientCredentialPassword": "{{key "valerian 1.0/cluster config/site-definition/serviceuser/password"}}",
+    "ServiceClientCredentialDomain": "{{key "valerian 1.0/cluster config/site-definition/serviceuser/domain"}}"
+  },
+  "CacheServerSettings": {
+    "RedisEndPoint": "{{key "valerian 1.0/cluster config/datasources/redis/host"}}:{{key "valerian 1.0/cluster config/datasources/redis/port"}}",
+    "Expiration": "14400",
+    "Password": "{{key "valerian 1.0/cluster config/datasources/redis/password"}}"
+  },
+  "JwtConfig": {
+    "Secret": "llvudfvkwvepwkdnsnwmuulyvtrawppf"
+  },
+  "GlobalAppSettings": {
+    "Culture": "en-us",
+    "Locale": "en-us", 
+    "DateTimeFormat": "dd/MM/yyyy HH:mm:ss", 
+    "TargetEndTreatmentStatusElementId": "{{key "valerian 1.0/cluster config/site-definition/SLA/TargetEndTreatmentStatusElementId"}}",
+    "TargetSmartMTypeElementId": "{{key "valerian 1.0/cluster config/site-definition/SLA/TargetSmartMTypeElementId"}}",
+    "SourceSmartMTypeElementId": "{{key "valerian 1.0/cluster config/site-definition/SLA/SourceSmartMTypeElementId"}}",
+    "SLACreationDateFrom": "{{key "valerian 1.0/cluster config/site-definition/SLA/SourceSmartMTypeElementId"}}" 
+  },
+  "AllowedHosts": "*",
+  "Services": {
+    "wsHttp": {
+      "AuthenticationService": {
+        "address": "https://{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}/SMNG/Services/AuthenticationService.svc"
+      },
+      "AdapterManagementService": {
+        "address": "https://{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}/SMNG/Services/AdapterManagementService.svc"
+      },
+      "EventManagementService": {
+        "address": "https://{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}/SMNG/Services/EventService.svc"
+      },
+      "TemplateManagementService": {
+        "address": "https://{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}/SMNG/Services/TemplatesManagementService.svc"
+      },
+      "Default": {
+        "dnsIdentity": "{{key "valerian 1.0/cluster config/site-definition/siteFullDNSName"}}",
+        "securityMode": "Transport",
+        "securityClientCredentialType": "Windows",
+        "closeTimeout": "00:10:00",
+        "openTimeout": "00:10:00",
+        "receiveTimeout": "00:10:00",
+        "sendTimeout": "00:10:00",
+        "maxBufferSize": 20524888,
+        "maxReceivedMessageSize": 2147483647,
+        "maxDepth": 150,
+        "maxStringContentLength": 20400320,
+        "maxArrayLength": 2147483647,
+        "maxBytesPerRead": 16384,
+        "maxNameTableCharCount": 524888
+
+      }
+    }
+  }
+}

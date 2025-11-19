@@ -1,0 +1,10 @@
+{
+    "service": {
+        "name": "gis",
+        "port": 80,
+        "address" : "{{ hostvars['gis'].ansible_host }}",
+        "connect": {
+            "sidecar_service": {}
+        }
+    }
+}

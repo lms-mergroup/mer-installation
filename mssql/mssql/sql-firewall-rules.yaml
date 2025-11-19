@@ -1,0 +1,31 @@
+# Add firewall port rules
+firewall_rules:
+  - name: "Allow SQL"
+    port: 1433
+    protocol: tcp
+    direction: in
+  - name: "Allow HTTP"
+    port: 80
+    protocol: tcp
+    direction: in
+  - name: "Allow-Any-To-SQL-1433-Inbound"
+    port: 1433
+    protocol: tcp
+    direction: in
+  - name: "Allow-Any-To-SQL-443-Inbound"
+    port: 443
+    protocol: tcp
+    direction: in
+  - name: "Allow-iis-To-SQL-msdtports-Inbound"
+    port: "49152-65535"
+    protocol: tcp
+    direction: in
+  - name: "Allow-sql-To-iis-135-Inbound"
+    port: 135
+    protocol: tcp
+    direction: in
+firewall_program_rule:
+  - name: "allow-iis-to-sql-msdtc-inbound"
+    program: '%SystemRoot%\System32\msdt.exe'
+    protocol: tcp
+    direction: in

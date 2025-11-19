@@ -1,0 +1,89 @@
+ - name: Update dbupdater config file
+   hosts: iis 
+   gather_facts: no
+   collections:
+    - ansible.windows
+ 
+   vars_files:
+     - "{{ipack}}mssql/playbooks/vars/update-dbupdater-config-vars.yaml"
+     - "{{ipack}}mssql/playbooks/vars/sql-server-common-vars.yaml"
+     - "{{customer_data_dir}}common/domain-common-vars.yaml"
+   vars:
+     hostname: "{{hostvars['sql'].host_name}}"
+     hostname_iis: "{{hostvars['iis'].host_name}}"
+     domaindevseviceuser: '{{domain_short_name}}\{{DevServiceUser}}'
+
+  
+   tasks:
+     - name: Show config_path
+       debug:
+         var: config_path
+     - name: replace data source hostname
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '(?i)data source=[^;]+'
+         replace: 'data source={{hostname}}'
+     - name: replace PostgresServer
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '<add\s+key="PostgresServer"\s+value="[^"]*"'
+         replace: '<add key="PostgresServer" value="pg.service.{{ datacenter }}.valerian"'
+     - name: replace TimescaleServer
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '<add\s+key="TimescaleServer"\s+value="[^"]*"'
+         replace: '<add key="TimescaleServer" value="timescaledb.service.{{ datacenter }}.valerian"'
+     - name: replace MongoDBServer
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '(<add key="MongoDBServer" value="mongodb://mongodb\.service\.)[^\.]+(\.valerian:27017")'
+         replace: '$1{{datacenter}}$2'
+    
+     - name: replace JasperServerUrl
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '(<add key="JasperServerUrl" value="http://jasper\.service\.)[^\.]+(\.valerian:8090/jasperserver")'
+         replace: '$1{{datacenter}}$2'
+         
+     - name: replace IISSERVER
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '(<add key="IISSERVER"\s+value=")[^"]*(")'
+         replace: '$1{{hostname_iis}}$2'
+         
+     - name: replace JasperDataSourceDBName
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '(<add key="JasperDataSourceDBName"\s+value=")[^"]*(")'
+         replace: '$1{{domain_short_name}}$2' 
+
+     - name: Show domain devserviceuser
+       debug:
+         var: domaindevseviceuser        
+     - name: replace serverConfigurations
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '<serverConfigurations>\s*<add\s+name="[^"]*">'
+         replace: '<serverConfigurations> <add name="{{hostname}}">'
+        
+     - name: Replace ClioLoginName value dynamically
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '(<add key="ClioLoginName" value=")[^"]+(" />)'
+         replace: '$1{{ domaindevseviceuser | b64encode   }}$2'
+         
+     - name: Replace ClioLoginPassword value dynamically
+       include_tasks: "shared_tasks/replace_text.yaml"
+       vars:
+         file_path: "{{config_path}}"
+         regexp: '(<add key="ClioPassword" value=")[^"]+(" />)'
+         replace: '$1{{ DevServiceUser_password | b64encode   }}$2'

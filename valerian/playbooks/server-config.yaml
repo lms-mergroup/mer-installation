@@ -1,0 +1,235 @@
+---
+- name: server config 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ipack}}valerian/playbooks/vars/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}common/domain-common-vars.yaml"
+    - "{{ipack}}valerian/playbooks/vars/server-config-vars.yaml"
+
+  
+  vars: 
+    tmplts: "templates/server-config/"
+    files: "files/server-config/"
+
+  tasks:
+
+    - name: COPY | Copy action-items log config file
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: '{{files}}action_items/winston.js', dest: '{{ action_items_conf_folder }}' }
+
+    - name: COPY | Copy simba log config file
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: '{{files}}simba/winston', dest: '{{ simba_conf_folder }}'}
+
+    - name: COPY | Copy pulsar log config file
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: '{{files}}simulators/pulsar/winston.js', dest: '{{ pulsar_conf_folder }}'}
+
+
+    - name: Template | Adjust and copy Siddhi apps files
+      template: src={{ item.src }} dest={{ item.dest }}  owner=802 mode='0644' backup=true force=true
+      with_items:
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Barionet.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Barionet.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_CCTV.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_CCTV.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Elfar.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Elfar.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Luciad.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Luciad.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_HealthCheck_Luciad.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_HealthCheck_Luciad.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Lenel.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Lenel.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_NgxPCSC.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_NgxPCSC.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Risco.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Risco.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Voya.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Voya.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Ituran.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Ituran.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_United.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_United.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Gallagher.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Gallagher.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Vocia.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Vocia.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Pima.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Pima.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_UrbanDigital.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_UrbanDigital.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Zabbix.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Zabbix.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Nelysis.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Nelysis.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Arad.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Arad.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Aqua.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Aqua.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Agrolan.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Agrolan.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Agam.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Agam.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Magos.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Magos.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Suprema.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Suprema.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Gateway.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Gateway.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Desigo.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Desigo.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Swilco.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Swilco.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_G1.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_G1.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_SNMP.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_SNMP.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Simplex.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Simplex.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_Netiot.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_Netiot.siddhi'}
+        - { src: '{{tmplts}}siddhi/apps/Siddhi_xls.siddhi.j2', dest: '{{ siddhi_apps_folder }}Siddhi_xls.siddhi'}
+
+    - name: COPY | Copy Driver proxies appsettings files
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: '{{files}}driver_proxies/viisights/app/appsettings.json', dest: '{{ viisights_app_folder }}'}
+        - { src: '{{files}}driver_proxies/risconnect/app/appsettings.json', dest: '{{ risconnect_app_folder }}'}
+        - { src: '{{files}}driver_proxies/anyvision/app/appsettings.json', dest: '{{ anyvision_app_folder }}'}
+        - { src: '{{files}}driver_proxies/davantis/app/appsettings.json', dest: '{{ davantis_app_folder }}'}
+        - { src: '{{files}}driver_proxies/united/app/appsettings.json', dest: '{{ united_app_folder }}'}
+        - { src: '{{files}}driver_proxies/gallagher/app/appsettings.json', dest: '{{ gallagher_app_folder }}'}
+        - { src: '{{files}}driver_proxies/cawamo/app/appsettings.json', dest: '{{ cawamo_app_folder }}'}
+        - { src: '{{files}}driver_proxies/findface/app/appsettings.json', dest: '{{ findface_app_folder }}'}
+        - { src: '{{files}}driver_proxies/urbandigital/app/appsettings.json', dest: '{{ urbandigital_app_folder }}'}
+        - { src: '{{files}}driver_proxies/zabbix/app/appsettings.json', dest: '{{ zabbix_app_folder }}'}
+        - { src: '{{files}}driver_proxies/nelysis/app/appsettings.json', dest: '{{ nelysis_app_folder }}'}
+        - { src: '{{files}}driver_proxies/agrolan/app/appsettings.json', dest: '{{ agrolan_app_folder }}'}
+        - { src: '{{files}}driver_proxies/arad/app/appsettings.json', dest: '{{ arad_app_folder }}'}
+        - { src: '{{files}}driver_proxies/aqua/app/appsettings.json', dest: '{{ aqua_app_folder }}'}
+        - { src: '{{files}}driver_proxies/agam/app/appsettings.json', dest: '{{ agam_app_folder }}'}
+        - { src: '{{files}}driver_proxies/magos/app/appsettings.json', dest: '{{ magos_app_folder }}'}
+        - { src: '{{files}}driver_proxies/suprema/app/appsettings.json', dest: '{{ suprema_app_folder }}'}
+        - { src: '{{files}}driver_proxies/desigo/app/appsettings.json', dest: '{{ desigo_app_folder }}'}
+        - { src: '{{files}}driver_proxies/tyco/app/appsettings.json', dest: '{{ tyco_app_folder }}'}
+        - { src: '{{files}}driver_proxies/swilco/app/appsettings.json', dest: '{{ swilco_app_folder }}'}
+        - { src: '{{files}}driver_proxies/g1/app/appsettings.json', dest: '{{ g1_app_folder }}'}
+        - { src: '{{files}}stream/itto/app/appsettings.json', dest: '{{ itto_app_folder }}/appsettings.json' }
+        #in consul-templates role- { src: 'driver_proxies/mikado/app/mikado_appsettings.json', dest: '{{ consul_templates_opt_dir }}/templates'}
+        #in consul-templates role- { src: 'stream/clio/app/clio_appsettings.json', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: '{{files}}driver_proxies/simplex/app/appsettings.json', dest: '{{ simplex_app_folder }}'}
+        - { src: '{{files}}driver_proxies/netiot/app/appsettings.json', dest: '{{ netiot_app_folder }}'}
+        - { src: '{{files}}driver_proxies/xls/app/appsettings.json', dest: '{{ xls_app_folder }}'}
+        
+
+    - name: Template | Adjust and copy okazas and xhuma appsettings file
+      template: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: '{{tmplts}}okazas/app/appsettings.j2', dest: '{{ okazas_app_folder }}appsettings.json' }
+        - { src: '{{tmplts}}xhuma/app/appsettings.j2', dest: '{{ xhuma_app_folder }}appsettings.json' }
+
+    - name: COPY | Copy Driver proxies customer config files
+      copy: src={{ item.src }} dest={{ item.dest }} force=false
+      with_items:  
+        - { src: '{{files}}driver_proxies/viisights/app/backupInitData.json', dest: '{{ viisights_app_folder }}'}
+        - { src: '{{files}}driver_proxies/risconnect/app/backupInitData.json', dest: '{{ risconnect_app_folder }}'}
+        - { src: '{{files}}driver_proxies/anyvision/app/backupInitData.json', dest: '{{ anyvision_app_folder }}'}
+        - { src: '{{files}}driver_proxies/davantis/app/backupInitData.json', dest: '{{ davantis_app_folder }}'}
+        - { src: '{{files}}driver_proxies/united/app/backupInitData.json', dest: '{{ united_app_folder }}'}
+        - { src: '{{files}}driver_proxies/gallagher/app/backupInitData.json', dest: '{{ gallagher_app_folder }}'}
+        - { src: '{{files}}driver_proxies/cawamo/app/backupInitData.json', dest: '{{ cawamo_app_folder }}'}
+        - { src: '{{files}}driver_proxies/findface/app/backupInitData.json', dest: '{{ findface_app_folder }}'}
+        - { src: '{{files}}driver_proxies/findface/app/token.txt', dest: '{{ findface_app_folder }}'}
+        - { src: '{{files}}driver_proxies/urbandigital/app/backupInitData.json', dest: '{{ urbandigital_app_folder }}'}
+        - { src: '{{files}}driver_proxies/zabbix/app/backupInitData.json', dest: '{{ zabbix_app_folder }}'}
+        - { src: '{{files}}driver_proxies/nelysis/app/backupInitData.json', dest: '{{ nelysis_app_folder }}'}
+        - { src: '{{files}}driver_proxies/agrolan/app/backupInitData.json', dest: '{{ agrolan_app_folder }}'}
+        - { src: '{{files}}driver_proxies/arad/app/backupInitData.json', dest: '{{ arad_app_folder }}'}
+        - { src: '{{files}}driver_proxies/arad/app/config.txt', dest: '{{ arad_app_folder }}'}
+        - { src: '{{files}}driver_proxies/arad/app/RSA4096.ppk', dest: '{{ arad_app_folder }}'}
+        - { src: '{{files}}driver_proxies/aqua/app/backupInitData.json', dest: '{{ aqua_app_folder }}'}
+        - { src: '{{files}}driver_proxies/agam/app/backupInitData.json', dest: '{{ agam_app_folder }}'}
+        - { src: '{{files}}driver_proxies/magos/app/backupInitData.json', dest: '{{ magos_app_folder }}'}
+        - { src: '{{files}}driver_proxies/suprema/app/backupInitData.json', dest: '{{ suprema_app_folder }}'}
+        - { src: '{{files}}driver_proxies/desigo/app/backupInitData.json', dest: '{{ desigo_app_folder }}'}
+        - { src: '{{files}}driver_proxies/tyco/app/backupInitData.json', dest: '{{ tyco_app_folder }}'}
+        - { src: '{{files}}driver_proxies/swilco/app/backupInitData.json', dest: '{{ swilco_app_folder }}'}
+        - { src: '{{files}}driver_proxies/g1/app/backupInitData.json', dest: '{{ g1_app_folder }}'}
+        - { src: '{{files}}driver_proxies/simplex/app/backupInitData.json', dest: '{{ simplex_app_folder }}'}
+        - { src: '{{files}}driver_proxies/netiot/app/backupInitData.json', dest: '{{ netiot_app_folder }}'}
+        - { src: '{{files}}driver_proxies/xls/app/backupInitData.json', dest: '{{ xls_app_folder }}'}
+
+
+
+    - name: COPY | Copy xhuma app files
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: '{{files}}xhuma/app/log4net.config', dest: '{{ xhuma_app_folder }}'}
+
+    - name: COPY | Copy okazas app files
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: '{{files}}okazas/app/log4net.config', dest: '{{ okazas_app_folder }}'}
+
+    - name: COPY | Copy grafana settings file
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+       - { src: '{{files}}vizualization/grafana/defaults.ini', dest: '{{ grafana_conf_folder }}/defaults.ini' }
+
+
+    - name: COPY | Copy clio resources files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} force=false
+      with_items:
+        - { src: 'stream/clio/app/Resources/sla_required_response_time.json', dest: '{{ clio_app_folder }}Resources/' }
+
+    - name: COPY | Copy clio resources files - workdays
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: '{{files}}stream/clio/app/Resources/work_days.json', dest: '{{ clio_app_folder }}Resources/'}
+        
+    - name: COPY | Copy logstash config files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} force=true
+      with_items:
+        - { src: 'stream/logstash/config/jdbc-sql_last_value.yml', dest: '{{ logstash_conf_folder }}'}
+        - { src: 'stream/logstash/config/log4j2.properties', dest: '{{ logstash_conf_folder }}'}
+        - { src: 'stream/logstash/config/logstash.yml', dest: '{{ logstash_conf_folder }}'}
+        - { src: 'stream/logstash/config/token.txt', dest: '{{ logstash_conf_folder }}'}
+        - { src: 'stream/logstash/lib/pluginmanager/', dest: '{{ logstash_plugin_folder }}'}
+        - { src: 'stream/logstash/driver/', dest: '{{ logstash_driver_folder }}'}
+        - { src: 'stream/logstash/pipeline_examples/', dest: '{{ logstash_pipeline_examples_folder }}'}
+
+    - name: COPY | Copy logstash pipeline yaml
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} force=false
+      with_items:
+        - { src: 'stream/logstash/config/pipelines.yml', dest: '{{ logstash_conf_folder }}'}
+
+
+    - name: Template | Adjust and copy superset config file
+      template:
+        src: '{{tmplts}}superset/config/config.py.j2'
+        dest: '{{ superset_config_folder }}/config.py'
+        backup: true 
+        force: true
+
+    - name: COPY | Copy jasper bundles folder
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: 'reports/jasper/WEB-INF/bundles/', dest: '{{ jasper_folder }}/WEB-INF/bundles/'}
+
+    ##copy mssql jdbc jar
+    - name: COPY | JASPER - copy mssql jdbc jar
+      copy:
+        src: '{{ mssql_jdbc_src }}'
+        dest: '{{ mssql_jdbc_dest }}'
+        owner: root
+        group: root    
+        force: true
+
+    ##copy pg jar
+    - name: COPY | JASPER - copy pg jar
+      copy:
+        src: '{{ pg_jar_src }}'
+        dest: '{{ pg_jar_dest }}'
+        owner: root
+        group: root
+        force: true
+
+    - name: COPY | Copy jasper files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} force={{ item.force }} backup={{ item.backup }}
+      with_items:
+        - { src: 'reports/jasper/WEB-INF/lib/', dest: '{{ jasper_lib_folder }}', force: true, backup: false}
+        - { src: 'reports/jasper/WEB-INF/classes/esapi/', dest: '{{ jasper_esapi_folder }}', backup: true, force: true}
+        - { src: 'reports/jasper/WEB-INF/applicationContext-report-scheduling.xml', dest: '{{ jasper_webinf_folder }}', force: true, backup: false}
+        #in consul-templates role- { src: 'reports/jasper/WEB-INF/js.quartz.properties', dest: '{{ consul_templates_opt_dir }}/templates/', force: true, backup: true}
+
+    ##Jasper context file
+    - name: Template | JASPER - Adjust and copy context file
+      template:
+        src: '{{tmplts}}reports/jasper/META-INF/context.xml.j2'
+        dest: '{{ jasper_folder }}/META-INF/context.xml'
+        backup: true
+        force: true
+       
+    - name: COPY | Copy minio initial data files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} force=false
+      with_items:
+       ## - { src: 'minio/data/activities', dest: '{{ minio_data_folder }}'}
+        - { src: 'minio/data/system-files', dest: '{{ minio_data_folder }}'}
+

@@ -1,0 +1,13 @@
+[Unit]
+Description=consul-template
+
+[Service]
+User=root
+Group=root
+ExecStart=/bin/sh -c "{{ consul_templates_home_dir }}/consul-template -config={{ consul_templates_opt_dir }}/config/config.cfg  >> {{ consul_template_log_file }} 2>&1"
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

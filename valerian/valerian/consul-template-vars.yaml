@@ -1,0 +1,6 @@
+consul_templates_home_dir: '/usr/local/bin'
+consul_templates_opt_dir: '/v/opt/consul-templates'
+consul_templates_service_file: '/etc/systemd/system/consul-templates.service'
+consul_template_log_file: '/v/opt/consul-templates/logs/consul_log.log'
+zip_src: '{{ipack}}/valerian/packages/consul-template_0.23.0_linux_amd64.zip'
+unzip_dest: '/usr/local/bin'

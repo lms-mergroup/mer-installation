@@ -1,0 +1,36 @@
+---
+- name: copy public key from Valkyrie  to Valerian
+  hosts: valkyrie
+  become: yes
+  become_user: root
+
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+    
+  vars:
+    ssh_user: root                   # user on valerian where key will be installed
+    ssh_key_path: /root/.ssh/id_ed25519
+    ssh_key_type: ed25519
+
+  tasks:
+    - name: Ensure .ssh directory exists on valkyrie
+      file:
+        path: "{{ ssh_key_path | dirname }}"
+        state: directory
+        mode: '0700'
+ 
+    - name: Generate SSH keypair on valkyrie if not exists
+      community.crypto.openssh_keypair:
+        path: "{{ ssh_key_path }}"
+        type: "{{ ssh_key_type }}"
+        force: no
+        mode: '0600'
+       
+    - name: Copy public key from valkyrie to valerian
+      authorized_key:
+        user: "{{ ssh_user }}"
+        state: present
+        key: "{{ lookup('file', ssh_key_path + '.pub') }}"
+      delegate_to: valerian       
+        

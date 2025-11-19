@@ -1,0 +1,214 @@
+---
+- name: change hostname 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ customer_data_dir }}/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}/domain-common-vars.yaml"
+    
+  tasks:
+ # Install Consul
+- name: Check if Consul service exists
+  stat: path={{consul_path}}
+  register: service_status
+
+- name: Check if Consul binary exists
+  stat: path={{ consul_zip_dest }}consul
+  register: consul_binary
+
+- name: Is consul exists
+  debug:
+    var: consul_binary
+
+- name: Get consul version
+  shell: consul --version
+  when: consul_binary.stat.exists
+  register: results
+
+- name: Print consul version
+  debug:
+    var: results
+
+- name: Compare Consul current version to required version - 1
+  debug:
+    msg: Consul version is the required version:'{{ consul_version }}'. Do nothing.
+  when: "results.changed and results.stdout is search(consul_version | string)"
+
+- name: Compare Consul current version to required version - 2
+  debug:
+    msg: Consul version is NOT the required version:'{{ consul_version }}'. Going to install the required version.
+  when: "results.changed and results.stdout is not search(consul_version | string)"
+
+- name: CONSUL_KV | backup current consul kv before upgrade
+  shell: consul kv export / > {{ consul_kv_file_path }}/kv_backup_{{ lookup('pipe', 'date +%Y_%m_%d') }}.json
+  when: "consul_binary.stat.exists and (hostvars['valerian'] is defined or inventory_hostname == 'valerian')"
+
+- name: STOP SERVICE | stop consul service
+  service:
+    name: consul.service
+    state: stopped
+  when: service_status.stat.exists 
+
+- name: Backup | Generate backup folder name based on current date
+  command: 'date +%Y_%m_%d'
+  register: current_date
+
+- name: Print current date
+  debug:
+    var: current_date
+
+- name: Backup | Create backup folder
+  file:
+    path: "{{ consul_backup_dir }}/{{ lookup('pipe', 'date +%Y_%m_%d') }}"
+    state: directory
+
+- name: Backup | Backup old consul binary file
+  shell: mv '{{ consul_zip_dest }}/consul' '{{ consul_backup_dir }}/{{current_date.stdout}}/consul_{{ lookup('pipe', 'date +%Y_%m_%d') }}'
+  when: "results.changed and results.stdout is not search(consul_version | string) and consul_binary.stat.exists"
+
+- name: Check if /opt/consul directory exists
+  stat: path={{ opt_path }}
+  register: opt_consul_dir
+
+- name: Backup | Backup consul data in /opt/consul/ for consul agent
+  shell: mv {{ opt_path }}/{{ item }} {{ consul_backup_dir }}/{{current_date.stdout}}/
+  with_items:
+  - services
+  - checks
+  - serf
+  - checkpoint-signature
+  when: "results.changed and results.stdout is not search(consul_version | string) and opt_consul_dir.stat.exists"
+  #when: "results.changed"
+  #consider changing to commented line - to backup configuration anyway if consul already exists
+
+- name: Backup | Backup consul data in /opt/consul/ for consul server/tiny
+  shell: mv {{ opt_path }}/{{ item }} {{ consul_backup_dir }}/{{current_date.stdout}}/
+  with_items:
+  - raft
+  - server_metadata.json
+  when: "results.changed and results.stdout is not search(consul_version | string) and ('masters' in group_names or hostvars['tiny-valerian'] is defined) and opt_consul_dir.stat.exists" 
+  #when: "results.changed and ('masters' in group_names or hostvars['tiny-valerian'] is defined)""
+  #consider changing to commented line - to backup configuration anyway if consul already exists and is server
+
+- name: Extract Consul zip to destination
+  unarchive:
+    src: '{{ consul_zip_src }}'
+    dest: '{{ consul_zip_dest }}'
+    mode: "0744"
+  when: "(results.changed and results.stdout is not search(consul_version | string)) or consul_binary.stat.exists == False"
+
+- name: Remove consul data in /opt/consul/ for consul agent
+  file:
+    state: absent
+    path: '{{ opt_path }}/{{ item }}'
+  with_items: 
+  - services
+  - checks
+  - serf
+  - checkpoint-signature
+  when: "results.changed"
+  #when: "results.changed and results.stdout is not search(consul_version | string)"
+  #consider changing to commented line - remove data anyway if consul already exists
+
+- name: Remove consul data in /opt/consul/ for consul server/tiny
+  file:
+    state: absent
+    path: '{{ opt_path }}/{{ item }}'
+  with_items: 
+  - raft
+  - server_metadata.json
+  when: "results.changed and ('masters' in group_names or hostvars['tiny-valerian'] is defined)"
+  #when: "results.changed and ('masters' in group_names or hostvars['tiny-valerian'] is defined)""
+  #consider changing to commented line - remove data anyway if consul already exists and is server
+
+- name: Create Consul opt directory
+  file:
+    path: '{{ opt_path }}'
+    owner: root
+    group: root
+    state: directory
+
+- name: Create Consul logs directory
+  file:
+    path: '{{ opt_path }}/logs'
+    owner: root
+    group: root
+    state: directory
+    
+- name: Create a consul service file    
+  file:
+    path: '{{ service_file }}'
+    state: touch
+    owner: root
+    group: root
+    mode: 01640
+       
+- name: Create service file
+  template:
+    src: consul_service.j2
+    dest: '{{ service_file }}'
+
+
+- name: Check if /etc/consul.d directory exists
+  stat: path=/etc/consul.d/
+  register: etc_consul_dir
+
+- name: Backup | Backup old consul config file
+  shell: "mv /etc/consul.d/* {{ consul_backup_dir }}/{{current_date.stdout}}"
+  when: "etc_consul_dir.stat.exists"
+  
+
+- name: Create Consul /etc/consul.d directory
+  file:
+    path: '{{ user_home }}'
+    owner: root
+    group: root
+    state: directory  
+
+- name: Consul server file in /etc/consul.d/
+  template:
+    src: consul_server.j2
+    dest: '{{ consul_server_file }}'
+  when: "'masters' in group_names or hostvars['tiny-valerian'] is defined"
+
+- name: Consul agent file in /etc/consul.d/
+  template:
+    src: consul_agent.j2
+    dest: '{{ consul_agent_file }}'
+
+- name: Consul encryption file in /etc/consul.d/
+  template:
+    src: consul_encrypt.j2
+    dest: '{{ consul_encrypt_file }}'
+
+- name: Set IIS and mssql servers in consul
+  template: 
+    src: "{{ item.src }}" 
+    dest: "{{ item.dest }}" 
+    mode: 0644 
+    owner: root
+  with_items:
+    - { src: "mssql.json.j2", dest: "{{ user_home }}/mssql.json" }
+    - { src: "notifications.json.j2", dest: "{{ user_home }}/notifications.json" }
+    - { src: "signalr.json.j2", dest: "{{ user_home }}/signalr.json" }
+    - { src: "gis.json.j2", dest: "{{ user_home }}/gis.json" }
+
+- name: Enable and start consul service
+  service:
+    name: consul.service
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
+
+- name: Check if Consul service started successfully
+  stat: '{{consul_path}}'
+  register: service_started
+
+- name: CONSUL_KV | Import KV from backup taken before upgrade
+  shell: consul kv import @{{ consul_kv_file_path }}/kv_backup_{{ lookup('pipe', 'date +%Y_%m_%d') }}.json
+  when: "service_started.stat.exists and results.changed and (hostvars['valerian'] is defined or inventory_hostname == 'valerian')"
+  #when: "service_started.stat.exists and results.changed and results.stdout is not search(consul_version | string) and (hostvars['tiny-valerian'] is defined or inventory_hostname == 'valerian_c01')"
+  #consider changing to commented line - to import KV anyway if consul already exists and is tiny/client1 - and KV backup done + KV data removed!
+

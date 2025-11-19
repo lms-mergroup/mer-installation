@@ -1,0 +1,34 @@
+required_packages: 
+   - docker.io
+   - docker-compose
+   - gnupg
+   - pass
+   - unrar
+   - unzip
+   - python3-pip
+   - openjdk-11-jdk
+krb_required_packages:
+  - krb5-user
+  - samba         
+  - sssd
+  - sssd-tools
+  - libnss-sss
+  - libpam-sss
+  - ntp
+  - ntpdate
+  - realmd
+  - adcli
+  - packagekit
+  #-python3-pexpect
+
+local_key_path: /mnt/installpack/custdata/sandbox/lms/valerian/smm-sandbox-lms-linux-valerian_key.pem
+remote_key_file: /home/azureuser/keys/smm-sandbox-lms-linux-valerian_key.pem
+
+BaseVDFSDirPath: "/mnt/ext"
+BaseVDFSPath: "/v"
+LogsPath: "{{BaseVDFSPath}}/logs"
+hostname: "{{hostvars['valerian'].host_name}}"
+
+sql_connection_string: "mssql.service.{{datacenter}}.valerian;Database=SMNG.DATA;"
+
+db_updater_path: 'C:\SMNG\DBUpdater\SecureM.NG.DBUpdate.CLI.exe'

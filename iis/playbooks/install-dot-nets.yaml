@@ -1,0 +1,21 @@
+- name: Install ASP.NET Core Runtime 5.0.17 & 7.0.20 Hosting Bundle
+  hosts: iis
+  gather_facts: no
+  collections:
+   - ansible.windows
+
+  vars_files:
+   - "{{ipack}}/iis/playbooks/vars/iis-common-vars.yaml"
+
+  tasks:
+    - name: Install dotnet 5017 Core Hosting Bundle silently
+      ansible.windows.win_package:
+        path: "{{ dotnet_path }}/{{dotnet5017_name}}"
+        arguments: "/quiet /norestart"
+        state: present
+
+    - name: Install ASP.NET Core Hosting Bundle silently
+      ansible.windows.win_package:
+        path: "{{ dotnet_path }}/{{dotnet7020_name}}"
+        arguments: "/quiet /norestart"
+        state: present

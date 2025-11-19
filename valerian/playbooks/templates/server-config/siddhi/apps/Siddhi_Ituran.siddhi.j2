@@ -1,0 +1,337 @@
+@App:name("Siddhi_Ituran")
+@App:description('Consume data from a Kafka Topic and publish to a different Kafka Topic')
+
+
+--source for Ituran
+@source(type='kafka',
+        topic.list='Topic_DA_Ituran.locations',
+        partition.no.list='0',
+        threading.option='single.thread',
+        group.id="group",
+		bootstrap.servers='Kafka.service.{{datacenter}}.valerian:29092',
+        @map(
+                        type='json', fail.on.missing.attribute='false', enclosing.element="$.Data",
+                        @attributes(
+                                ElementId = "ElementId",
+								Lon = "Lon",
+								Lat= "Lat",
+								SRID = "SRID"
+                                )
+                        )
+                )
+
+
+define stream SMNGStream_Ituran_AsJSON(                             
+							ElementId string ,
+							Lon string ,
+							Lat string ,
+							SRID string
+);
+
+
+
+@source(type='kafka',
+        topic.list='Topic_DA_Ituran.modifiedData',
+        partition.no.list='0',
+        threading.option='single.thread',
+        group.id="group",
+		bootstrap.servers='Kafka.service.{{datacenter}}.valerian:29092',
+        @map(
+                        type='json', fail.on.missing.attribute='false', enclosing.element="$.Data",
+                        @attributes(
+                                ElementId = "ElementId",
+								Lon = "Lon",
+								Lat= "Lat",
+								Areas = "Areas",
+								Drivername = "Drivername",
+								Address = "Address",
+								Head= "Head",
+								LocationTime = "LocationTime",
+								Speed = "Speed",
+								Statuses = "Statuses",
+								UAID= "UAID",
+								VIN = "VIN"
+                                )
+                        )
+                )
+
+
+define stream SMNGDataStream_Ituran_AsJSON(                             
+							ElementId string ,
+							Lon string ,
+							Lat string ,
+							Areas string,
+							Drivername string ,
+							Address string ,
+							Head string ,
+							LocationTime string,
+							Speed string ,
+							Statuses string ,
+							UAID string ,
+							VIN string
+);
+
+
+@source(type='kafka',
+        topic.list='Topic_DA_Ituran',
+        partition.no.list='0',
+        threading.option='single.thread',
+        group.id="group",
+		bootstrap.servers='Kafka.service.{{datacenter}}.valerian:29092',
+        @map(
+                        type='json', fail.on.missing.attribute='false', enclosing.element="$",
+                        @attributes(
+                                CreationDate = "CreationDate",
+                                InputId = "InputId",
+                                TriggerElementId = "TriggerElementId",
+                                TriggerStr = "TriggerStr",
+                                TriggerId ="TriggerId",
+                                ExternalId="ExternalId",
+                                StatusId="StatusId",
+                                ExtraData="ExtraData",
+                                Severity="Severity",
+                                TriggerDescription="TriggerDescription",
+                                EventType="EventType",
+                                UserId="UserId",
+                                InputType="InputType",
+                                ServiceStateId="ServiceStateId",
+                                Notify="Notify",	
+				EventName="EventName",
+				EventSingleInstanceFlagRaised="EventSingleInstanceFlagRaised"
+                                )
+                        )
+                )
+
+
+define stream SMNGStream_Ituran_AsJSON(
+                            CreationDate string,
+                            InputId string,
+                            TriggerElementId string ,
+                            TriggerStr string,
+                            TriggerId string,
+                            ExternalId string,
+                            StatusId string,
+                            ExtraData string,
+                            Severity string,
+                            TriggerDescription string,
+                            EventType string,
+                            UserId string,
+                            InputType string,
+                            ServiceStateId string,
+                            Notify string,	
+                            EventSingleInstanceFlagRaised bool
+
+--At the end we need to insert this info into Kafka again
+@sink(type='kafka',
+      topic='Topic_Locations',
+bootstrap.servers='Kafka.service.{{datacenter}}.valerian:29092',
+      partition.no='0',
+      @map(type='json'))
+
+define stream SMNGStreamLocations(
+                             ElementId string ,
+							Lon string ,
+							Lat string ,
+							SRID string
+                            );
+
+--At the end we need to insert this info into Kafka again
+@sink(type='kafka',
+      topic='Topic_ModifiedData',
+bootstrap.servers='Kafka.service.{{datacenter}}.valerian:29092',
+      partition.no='0',
+      @map(type='json'))
+
+define stream SMNGStreamModifiedData(
+                            ElementId string ,
+							Lon string ,
+							Lat string ,
+							Areas string,
+							Drivername string ,
+							Address string ,
+							Head string ,
+							LocationTime string,
+							Speed string ,
+							Statuses string ,
+							UAID string ,
+							VIN string
+                            );
+
+
+--At the end we need to insert this info into Kafka again
+@sink(type='kafka',
+      topic='Topic_Events',
+bootstrap.servers='Kafka.service.{{datacenter}}.valerian:29092',
+      partition.no='0',
+      @map(type='json'))
+
+
+define stream SMNGStreamEvents(
+                            InputId string,
+                            TriggerElementId string,
+							TriggerStr string,
+                            TriggerId string,
+                            CreationDate string,
+                            ExternalId string,
+                            StatusId string,
+                            ExtraData string,
+                            TemplateId string, 
+                            UserId string, 
+                            SeverityId string,
+                            totalVolume int,
+                            InputType string,
+                            ServiceStateId string,	
+                            EventSingleInstanceFlagRaised bool,
+			    EventName string
+                            );					
+
+--At the end we need to insert this info into Kafka again	
+@sink(type='kafka',	
+      topic='Topic_Inputs',	
+bootstrap.servers='kafka.service.{{datacenter}}.valerian:29092',	
+      partition.no='0',	
+      @map(type='json'))	
+define stream SMNGStreamInputs(	
+                            InputId string,	
+                            TriggerElementId string,	
+                            TriggerStr string,	
+                            TriggerId string,	
+                            CreationDate string,	
+                            ExternalId string,	
+                            StatusId string,	
+                            ExtraData string,	
+                            TemplateId string, 	
+                            UserId string, 	
+                            SeverityId string,	
+                            totalVolume int,	
+                            InputType string,	
+                            ServiceStateId string,	
+                            EventSingleInstanceFlagRaised bool	
+                            );	
+
+@sink(type='kafka',
+      topic='Topic_Statuses',
+bootstrap.servers='kafka.service.{{datacenter}}.valerian:29092',
+      partition.no='0',
+      @map(type='json'))
+
+define stream SMNGStreamStatuses(
+                            InputId string,
+                            TriggerElementId string,
+                            TriggerStr string,
+                            TriggerId string,
+                            CreationDate string,
+                            ExternalId string,
+                            StatusId string,
+                            ExtraData string,
+                            TemplateId string, 
+                            UserId string, 
+                            SeverityId string,
+                            totalVolume int,
+                            InputType string,
+                            ServiceStateId string,
+                            Notify string,	
+                            EventSingleInstanceFlagRaised bool
+                            );
+
+
+--for each input in Topic_DA_Ituran.locations move it to Topic_Locations
+@info(name='query_location')
+from SMNGStream_Ituran_AsJSON 
+--#window.length(5)
+select
+    ElementId ,
+	Lon ,
+	Lat,
+    SRID 
+insert into SMNGStreamLocations;
+
+
+--for each input in Topic_DA_Ituran.locations move it to Topic_Locations
+@info(name='query_modifiedData')
+from SMNGDataStream_Ituran_AsJSON 
+--#window.length(5)
+select
+    ElementId  ,
+	Lon  ,
+	Lat  ,
+	Areas ,
+	Drivername  ,
+	Address  ,
+	Head  ,
+	LocationTime ,
+	Speed  ,
+	Statuses  ,
+	UAID  ,
+	VIN 
+insert into SMNGStreamModifiedData;
+
+
+--for each input in Topic_DA_Ituran move it to Topic_Events
+@info(name='query_events')
+from SMNGStream_Ituran_AsJSON [InputType == 'Event' and EventSingleInstanceFlagRaised != true]
+--#window.length(5)
+select
+    InputId ,
+    TriggerElementId  ,
+    TriggerStr ,
+    TriggerId ,
+    CreationDate,
+    ExternalId ,
+    StatusId ,
+    ExtraData ,
+    EventType as TemplateId,
+    '86F56643-65A1-4108-9DD3-D391B4575969' as UserId,
+    Severity as SeverityId,
+    1 as totalVolume	,
+    InputType,
+    ServiceStateId,
+    EventName,
+    EventSingleInstanceFlagRaised
+insert into SMNGStreamEvents;
+
+--for each input in Topic_DA_Ituran move it to Topic_Inputs	
+@info(name='query_inputs')	
+from SMNGStream_Ituran_AsJSON [InputType == 'Event' and EventSingleInstanceFlagRaised == true] 	
+--#window.length(5)	
+select	
+    InputId ,	
+    TriggerElementId  ,	
+    TriggerStr ,	
+    TriggerId ,	
+    CreationDate,	
+    ExternalId ,	
+    StatusId ,	
+    ExtraData ,	
+    EventType as TemplateId,	
+    UserId,	
+    Severity as SeverityId,	
+    1 as totalVolume ,	
+    InputType,	
+    ServiceStateId,	
+    EventSingleInstanceFlagRaised	
+insert into SMNGStreamInputs;
+
+--for each input in Topic_DA_Ituran move it to Topic_Statuses
+@info(name='query_Statuses')
+from SMNGStream_Ituran_AsJSON [InputType == 'Status'] 
+--#window.length(5)
+select
+    InputId ,
+    TriggerElementId  ,
+    TriggerStr ,
+    TriggerId ,
+    CreationDate,
+    ExternalId ,
+    StatusId ,
+    ExtraData ,
+    EventType as TemplateId,
+    UserId,
+    Severity as SeverityId,
+    1 as totalVolume ,
+    InputType,
+    ServiceStateId,
+    Notify,
+    EventSingleInstanceFlagRaised
+insert into SMNGStreamStatuses;
+

@@ -1,0 +1,11 @@
+sql_iso_source: '{{ipack}}/mssql/iso/SQLServer2022-x64-ENU.iso'
+sql_iso_path: 'C:\Users\azureadmin\Downloads'
+sql_iso_name: 'SQLServer2022-x64-ENU.iso'
+sql_target_direction: 'C:\Program Files\Microsoft SQL Server'
+sql_sa_password: "ysTe2eapqW6PVS0fuqZ0"
+sql_node2_name: "NODE2"
+
+psqlODBC_source: '{{ipack}}/mssql/packages/psqlodbc_x64.msi'
+psqlODBC_dest_name: 'psqlodbc_x64.msi'
+
+repldata_path: 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\repldata'

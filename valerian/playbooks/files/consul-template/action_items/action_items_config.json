@@ -1,0 +1,58 @@
+{
+  "production": {
+    "server_port": 8080,
+    "snitch": {
+      "consul": {
+        "address": "consul.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:8500",
+        "port": 8500
+      },
+      "kafka": {
+        "address": "kafka.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:29092",
+        "topics": {
+          "error": "snitch_error",
+
+          "default": "snitch_error"
+        }
+      },
+      "messages": {
+        "RogueMessage": "Rogue",
+        "SnitchMessage": "Snitch"
+      }
+
+    },
+    "kafkaServer": {
+      "server": "kafka.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:29092"
+    },
+    "mongoDb": {
+      "urlServiceAction": "mongodb://admin:password@mongodb.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:27017/SMNG?authSource=admin"
+    },
+    "sqlServer": {
+      "config": {
+        "user": "{{key "valerian 1.0/cluster config/datasources/mssql/adminuser"}}",
+        "domain": "{{key "valerian 1.0/cluster config/datasources/mssql/domain"}}",
+        "password": "{{key "valerian 1.0/cluster config/datasources/mssql/adminpass"}}",
+        "server": "{{key "valerian 1.0/cluster config/datasources/mssql/host"}}",
+        "database": "smng.data",
+        "options": {
+          "useUTC": false
+        },
+        "pool": {
+          "max": 100,
+          "min": 1,
+          "idleTimeoutMillis": 30000
+        }
+      }
+    },
+    "notificationServer": {
+      "server": "http://notifications.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}/SMNG/NotificationServer/NotificationServer/"
+    },
+
+    "EventInfo": {
+      "EventElementFieldId": "A1049650-F164-427C-AF1F-26E35464A6DC",
+      "EventElementCapabilityId":"D5D38092-A329-41F6-80A9-306EB1C03437",
+      "EventElementFieldIdForValue":"B4E28898-9764-4B9C-B020-667915DAE0F1",
+      "ImageHandlerUrl": "http://notifications.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:5001",
+      "topic": "Topic_Kaizo.EventInfo"
+    }
+  }
+}

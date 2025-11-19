@@ -1,0 +1,162 @@
+---
+- name: consul-template 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ipack}}valerian/playbooks/vars/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}common/domain-common-vars.yaml"
+    - "{{ipack}}valerian/playbooks/vars/consul-template-vars.yaml"
+  
+  vars: 
+    tmplts: "templates/consul-template/"
+    files: "files/consul-template/"
+
+  tasks:
+  
+    - name: UNZIP | unzip binary file
+      unarchive:
+        src: '{{ zip_src }}'
+        dest: '{{ unzip_dest }}'
+
+
+    - name: Create consul-templates directories under /v/opt/
+      file:
+        path: '{{ item.path }}'
+        owner: root
+        group: root
+        state: directory
+      loop:
+        - { path : '{{ consul_templates_opt_dir }}/config'}
+        - { path : '{{ consul_templates_opt_dir }}/templates'}
+        - { path : '/v/nomad/jobs/'}
+        - { path : '{{ consul_templates_opt_dir }}/logs'}
+
+    ## Consul templates service
+    - name: COPY | Copy consul-templates config file
+      copy: src={{ item.src }} dest={{ item.dest }} backup=true force=true  mode=0774
+      with_items:
+        - { src: '{{files}}config.cfg', dest: '{{ consul_templates_opt_dir }}/config'}
+        
+      
+ 
+    - name: CREATE | Create a consul templates service file    
+      file:
+        path: '{{ consul_templates_service_file }}'
+        state: touch
+        owner: root
+        group: root
+        mode: 01640
+           
+    - name: CREATE | Create service file
+      template:
+        src: '{{tmplts}}consul_templates_service.j2'
+        dest: '{{ consul_templates_service_file }}'
+        
+
+    - name: COPY | Copy templates of consul to their directory in remote nomad-clients
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }}
+      with_items:
+        - { src: 'stream/kaizo.hcl', dest: '{{ consul_templates_opt_dir }}/templates' }
+        - { src: 'stream/snitch/snitch.hcl', dest: '{{ consul_templates_opt_dir }}/templates' }
+        - { src: 'stream/peppa.hcl', dest: '{{ consul_templates_opt_dir }}/templates' }
+        - { src: 'stream/pam.hcl', dest: '{{ consul_templates_opt_dir }}/templates' }
+        - { src: 'stream/logstash/logstash.hcl', dest: '{{ consul_templates_opt_dir }}/templates' }
+        - { src: 'simba/simba.hcl', dest: '{{ consul_templates_opt_dir }}/templates' }
+        - { src: 'kafka/kafka-ksql-ui.hcl', dest: '{{ consul_templates_opt_dir }}/templates' }
+        - { src: 'action_items/action_items.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'db/timescaledb.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'db/postgis.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'db/mongo.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'vizualization/metabase.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'vizualization/grafana/grafana.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'vizualization/superset.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'siddhi/siddhi.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'siddhi/siddhi_editor.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'documentation/sheldon.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'minio/minio.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'redis/redis.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'monitoring/zabbix/zabbix_server.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'simulators/pulsar/pulsar.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'reports/jasper/jasper.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'okazas/okazas.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'stream/clio/clio.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'stream/itto/itto.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'xhuma/xhuma.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/viisights/viisights.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}  
+        - { src: 'driver_proxies/risconnect/risconnect.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}  
+        - { src: 'driver_proxies/mikado/mikado.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/anyvision/anyvision.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}  
+        - { src: 'driver_proxies/davantis/davantis.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/united/united.hcl', dest: '{{ consul_templates_opt_dir }}/templates'} 
+        - { src: 'driver_proxies/gallagher/gallagher.hcl', dest: '{{ consul_templates_opt_dir }}/templates'} 
+        - { src: 'driver_proxies/cawamo/cawamo.hcl', dest: '{{ consul_templates_opt_dir }}/templates'} 
+        - { src: 'driver_proxies/findface/findface.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/urbandigital/urbandigital.hcl', dest: '{{ consul_templates_opt_dir }}/templates'} 
+        - { src: 'driver_proxies/zabbix/zabbix.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/nelysis/nelysis.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/agrolan/agrolan.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/arad/arad.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/aqua/aqua.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/agam/agam.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/magos/magos.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/suprema/suprema.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/desigo/desigo.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/tyco/tyco.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/swilco/swilco.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/g1/g1.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/simplex/simplex.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/netiot/netiot.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'driver_proxies/xls/xls.hcl', dest: '{{ consul_templates_opt_dir }}/templates'}
+        
+    - name: COPY | Copy kafka-zookeeper templates to cluster
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }}
+      with_items:
+      - { src: 'kafka/zookeeper_kafka.hcl', dest: '{{ consul_templates_opt_dir }}/templates' }
+      when: hostvars['valerian_c01'] is defined
+
+    - name: COPY | Copy kafka-zookeeper templates to tiny
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }}
+      with_items:
+      - { src: 'kafka/zookeeper_kafka_tiny.hcl', dest: '{{ consul_templates_opt_dir }}/templates/zookeeper_kafka.hcl' }
+      when: hostvars['valerian'] is defined
+
+    - name: COPY | Copy action-items config files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: 'action_items/action_items_config.json', dest: '{{ consul_templates_opt_dir }}/templates'}
+
+    - name: COPY | Copy simba config files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: 'simba/simba_config.json', dest: '{{ consul_templates_opt_dir }}/templates'}
+
+    - name: COPY | Copy pulsar config files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: 'simulators/pulsar/pulsar_config.json', dest: '{{ consul_templates_opt_dir }}/templates'}
+
+    - name: COPY | Copy redis config files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: 'redis/redis.conf', dest: '{{ consul_templates_opt_dir }}/templates'}
+
+    - name: COPY | Copy clio/mikado appsettings template files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} backup=true force=true
+      with_items:
+        - { src: 'driver_proxies/mikado/app/mikado_appsettings.json', dest: '{{ consul_templates_opt_dir }}/templates'}
+        - { src: 'stream/clio/app/clio_appsettings.json', dest: '{{ consul_templates_opt_dir }}/templates'}
+
+    - name: COPY | Copy jasper files
+      copy: src={{files}}{{ item.src }} dest={{ item.dest }} force={{ item.force }} backup={{ item.backup }}
+      with_items:
+        - { src: 'reports/jasper/WEB-INF/js.quartz.properties', dest: '{{ consul_templates_opt_dir }}/templates/', force: true, backup: true}
+
+    - name: SERVICE | Enable and start consul templates service
+      service:
+       name: consul-templates.service
+       
+       daemon_reload: yes
+       state: restarted
+       enabled: yes

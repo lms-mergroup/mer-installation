@@ -1,0 +1,64 @@
+- name: main chanege hostname and add to domain
+  hosts: iis
+  gather_facts: no
+  collections:
+   - ansible.windows
+
+  vars_files:
+     - "{{ipack}}/iis/playbooks/vars/iis-common-vars.yaml"
+     - "{{customer_data_dir}}/common/domain-common-vars.yaml"
+
+  tasks:
+    - name: Show full path of the variable file
+      ansible.builtin.debug:
+        msg: "Loading vars from {{ customer_data_dir }}/iis-common-vars.yaml"
+
+    - name: Print this host's vars
+      ansible.builtin.debug:
+        msg: "Running on {{ inventory_hostname }} with hostname {{ hostname }}"
+
+    - name: Get hostname via shell
+      ansible.windows.win_shell: hostname
+      register: hostname_result
+
+    - name: Show current hostname
+      ansible.builtin.debug:
+        msg: "Current hostname is {{ hostname_result.stdout }}"
+
+    - name: Get domain name
+      ansible.windows.win_shell: |
+        (Get-WmiObject Win32_ComputerSystem).Domain
+      register: current_domain_name
+
+    - name: Show current current_domain_name
+      ansible.builtin.debug:
+        msg: "Current domain is {{ current_domain_name.stdout }}"
+
+
+    - block: 
+        - name: Change hostname
+          ansible.windows.win_hostname:
+             name: "{{ hostname }}"
+          register: result
+
+        - name: Reboot if domain join occurred
+          ansible.windows.win_reboot:
+            reboot_timeout: 600
+
+        - name: Join domain
+          microsoft.ad.membership:
+            dns_domain_name: "{{ domain_name }}"
+            domain_admin_user: "{{ domain_user }}"
+            domain_admin_password: "{{ domain_pass }}"
+            state: domain
+
+        - name: Reboot if domain join occurred
+          ansible.windows.win_reboot:
+            reboot_timeout: 600
+      when: >
+        (hostname_result.stdout | trim | lower != hostname | lower) or 
+        (current_domain_name.stdout | trim | lower != domain_name | lower)
+
+ 
+
+  

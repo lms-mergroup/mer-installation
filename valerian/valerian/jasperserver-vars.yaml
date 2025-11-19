@@ -1,0 +1,24 @@
+    db_host: "jasper.service.{{datacenter}}.valerian"
+    db_name: "jasperserver"
+    db_user: "postgres"
+    db_password: "password"
+
+    # List of datasources you want to update
+    datasources:
+      - id: 2827
+        connectionurl: "jdbc:sqlserver://{{datacenter}};encrypt=true;trustServerCertificate=true"
+        username: "sa"
+        password: "{{sql_sa_password}}"
+      - id: 26383
+        connectionurl: "jdbc:sqlserver://{{datacenter}}.{{domain_short_name}}.local:1433;databaseName=SMNG.DATA"
+        username: "sa"
+        password: "{{sql_sa_password}}"
+        
+    filesources:
+      - id: 23079
+        new_url: "http://{{hostvars['iis'].host_name }}:5100/api/v1/consul"
+        new_pass: "{{sql_sa_password}}"
+        new_user: "sa"
+        
+
+

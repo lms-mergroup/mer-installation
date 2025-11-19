@@ -1,0 +1,37 @@
+- name: update administrator in table "user"
+  hosts: sql
+  gather_facts: no
+  collections:
+   - ansible.windows
+
+  vars_files:
+   - "{{ipack}}mssql/playbooks/vars/sql-server-common-vars.yaml"
+   - "{{customer_data_dir}}common/domain-common-vars.yaml"
+   - "{{customer_data_dir}}mssql/sql-install-vars.yaml"
+
+
+  vars:
+     hostname: "{{host_name}}"
+ 
+  tasks:
+    - name: Debug all vars
+      debug:
+        var: hostname
+
+    - name: Update domain name of DevServiceUser
+      ansible.windows.win_shell: |
+        sqlcmd -S {{hostname}} -U sa -P "{{sql_sa_password}}" -d "{{ sql_db }}" -Q "UPDATE [dbo].[User] SET [Domain] = '{{ domain_short_name }}' WHERE [UserId] = '{{sql_table_user_administrator_id }}'"
+      register: update_result
+
+    - name: Print update output
+      debug:
+        var: update_result.stdout
+
+    - name: Check
+      ansible.windows.win_shell: |
+        sqlcmd -S {{hostname}} -U sa -P "{{sql_sa_password}}" -d "{{ sql_db }}" -Q "SELECT * FROM [dbo].[User] WHERE [UserId] = '{{ sql_table_user_administrator_id }}'"
+      register: select_result
+
+    - name: Print select result
+      debug:
+        var: select_result.stdout

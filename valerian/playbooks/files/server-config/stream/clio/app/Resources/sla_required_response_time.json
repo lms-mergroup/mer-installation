@@ -1,0 +1,5 @@
+[
+      {"severity_name": "regular", "severity_id": "493254C6-F7E0-4C73-825D-135E5DB0466C", "response_time":"04:00", "service_time_only":"true"},
+      {"severity_name": "medium", "severity_id": "AB5328E5-AD0D-44DA-9339-1865F379FDA3", "response_time":"02:00", "service_time_only":"false"},
+      {"severity_name": "critical", "severity_id": "4C3D744C-7D2E-4E1A-AD31-3AF17693B2CE", "response_time":"01:00", "service_time_only":"false"}
+]

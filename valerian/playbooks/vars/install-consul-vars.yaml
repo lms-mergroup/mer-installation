@@ -1,0 +1,28 @@
+consul_path: '/etc/systemd/system/consul.service'
+
+# AnswerFile
+
+# Add the user consul
+user_shell: '/bin/false'
+user_home: '/etc/consul.d'
+
+# Create consul opt directory
+opt_path: '/opt/consul'
+consul_backup_dir: '/opt/consul/backup'
+
+# Create a consul service file
+service_file: '/etc/systemd/system/consul.service'
+consul_agent_file: '/etc/consul.d/consul.hcl'
+consul_server_file: '/etc/consul.d/server.hcl'
+consul_encrypt_file: '/etc/consul.d/encrypt.hcl'
+
+tiny_consul_file: '/etc/consul.d/consul.hcl'
+consul_kv_file_path: '/v/data/consul_kv/'
+
+consul_version: 'Consul v1.14.2'
+
+# Extract consul zip - the binaries are located where your ansible playbook is
+consul_zip_src: '{{ipack}}/valerian/packages/consul_1.14.2_linux_amd64.zip'
+consul_zip_dest: '/usr/local/bin/'
+
+

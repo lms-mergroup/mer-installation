@@ -1,0 +1,31 @@
+---
+- name: Check if PostgreSQL port 5432 is listening (retry 5 times)
+  hosts: valerian
+  gather_facts: no
+  vars:
+    check_retries: 5
+    check_delay: 5    # seconds between retries
+    check_port: 5432
+
+  tasks:
+
+    - name: Wait until port 5432 is open (max 5 tries)
+      ansible.builtin.wait_for:
+        host: "{{ansible_host}}"
+        port: "{{check_port}}"
+        timeout: 3
+        state: started
+      register: port_check
+      retries: "{{ check_retries }}"
+      delay: "{{ check_delay }}"
+      until: port_check is succeeded
+      ignore_errors: false  # ensure play fails if not successful
+
+    - name: Report success
+      ansible.builtin.debug:
+        msg: "✅ PostgreSQL is listening on port 5432."
+
+
+
+
+ 

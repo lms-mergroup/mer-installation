@@ -1,0 +1,27 @@
+{
+  "SqlServer": {
+    "config": {
+      "user": "{{key "valerian 1.0/cluster config/datasources/mssql/adminuser"}}",
+      "domain": "{{key "valerian 1.0/cluster config/datasources/mssql/domain"}}",
+      "password": "{{key "valerian 1.0/cluster config/datasources/mssql/adminpass"}}",
+      "server": "{{key "valerian 1.0/cluster config/datasources/mssql/host"}}",
+      "database": "smng.data",
+      "options": {
+        "useUTC": false,
+        "trustServerCertificate": true
+      },
+      "pool": {
+        "max": 100,
+        "min": 1,
+        "idleTimeoutMillis": 30000
+      }
+    }
+  },
+  "kafka": {
+    "BrokerIP": "kafka.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}:29092"
+  },
+  "ServerDetails": {
+    "HostName": "pulsar.service.{{ range datacenters }}{{.}}{{end}}.{{key "valerian 1.0/cluster config/domain"}}",
+    "Port": "3001"
+  }
+}

@@ -1,0 +1,71 @@
+---
+- name: Install consul KV 
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ipack}}valerian/playbooks/vars/valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}common/domain-common-vars.yaml"
+    - "{{ipack}}valerian/playbooks/vars/install-consul-kv-vars.yaml"
+  
+  vars: 
+    tmplts: "templates/consulkv/"
+    
+  tasks:
+  
+    - name: DIRECTORY | create consul kv files directory
+      file:
+        path: "{{ consul_kv_file_path }}"
+        state: directory
+        owner: root
+        group: root
+
+       
+#    - name: CONSUL_KV | backup current consul kv before import
+#      shell: consul kv export / > {{ consul_kv_file_path }}/kv_backup.json
+
+    - name: CONSUL_KV | save file to process
+      template:
+        src: "{{tmplts}}kv.j2"
+        dest: '{{ consul_kv_file_path }}/kv.json'
+
+    ##copy jar to machine
+    - name: COPY | copy kv interpolator jar
+      copy:
+        src: '{{ interpolator_src }}'
+        dest: '{{ consul_kv_file_path }}'
+        owner: root
+        group: root
+
+    #execute jar 
+    - name: RUN | execute kv-interpolator jar
+      shell: cd '{{ consul_kv_file_path }}' && java -jar '{{ interpolator_jar }}' com.mer.conversion.Main
+             -in '{{ consul_kv_file_path }}/kv.json' 
+             -out '{{ consul_kv_file_path }}/kv_out.json' 
+             -dc '{{datacenter}}'
+#
+    - name: CONSUL_KV | Remove KV before import----BE CAREFUL!!!!!!!
+      shell: consul kv delete -recurse /    
+
+    - name: CONSUL_KV | import kv file command
+      shell: consul kv import @{{ consul_kv_file_path }}/kv_out.json    
+      
+      
+    - name: "CONSUL_KV | create nightly backup folder"
+      file:
+        path: '{{ consul_kv_backup_path }}'
+        owner: root
+        group: root
+        state: directory
+
+    - cron:
+        name: "backup consul kv nightly"
+        state: present
+        job: /usr/local/bin/consul kv export > /v/data/consul_kv/backup/"$(date)".json
+        minute: 55
+        hour: 23
+        user: root
+        cron_file: consul_kv_backup
+
+      

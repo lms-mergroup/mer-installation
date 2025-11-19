@@ -1,0 +1,191 @@
+---
+- name: Consul lv config
+  hosts: valerian
+  become: yes
+  become_user: root   # like sudo suhost-
+  
+  vars_files:
+    - "{{ipack}}valerian/playbooks/vars//valerian-server-common-vars.yaml"
+    - "{{ customer_data_dir }}common/domain-common-vars.yaml"
+    - "{{ipack}}mssql/playbooks/vars//sql-server-common-vars.yaml"
+  
+  vars:
+    nexus_port: "8083"
+    sql_connection_string: "mssql.service.{{datacenter}}.valerian;Database=SMNG.DATA;"
+  
+  tasks:
+    - name: Update siteDNSName
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/site-definition/siteDNSName"
+        method: PUT
+        body: "{{hostvars['iis'].host_name}}"
+        status_code: 200
+    - name: Update siteDNSName
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/site-definition/siteFullDNSName"
+        method: PUT
+        body: "{{hostvars['iis'].host_name}}@{{domain_name}}"
+        status_code: 200
+        
+    - name: Update site domain name
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/site-definition/serviceuser/domain"
+        method: PUT
+        body: "{{domain_name}}"
+        status_code: 200
+        
+    - name: Update devserviceuser
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/site-definition/serviceuser/username"
+        method: PUT
+        body: "{{DevServiceUser}}"
+        status_code: 200
+        
+    - name: Update devserviceuser pssword
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/site-definition/serviceuser/password"
+        method: PUT
+        body: "{{DevServiceUser}}"
+        status_code: 200
+
+    - name: Update MSSQL admin user
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/datasources/mssql/adminuser"
+        method: PUT
+        body: "{{DevServiceUser}}"
+        status_code: 200
+    - name: Update MSSQL admin user password
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/datasources/mssql/adminpass"
+        method: PUT
+        body: "{{DevServiceUser_password}}"
+        status_code: 200    
+    
+    - name: Update MSSQL local user
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/datasources/mssql/localuser"
+        method: PUT
+        body: "{{sql_smartm_user}}"
+        status_code: 200
+    - name: Update MSSQL local user password
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/datasources/mssql/localpass"
+        method: PUT
+        body: "{{sql_smartm_user_password}}"
+        status_code: 200
+        
+    - name: Update MSSQL domain
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/cluster%20config/datasources/mssql/domain"
+        method: PUT
+        body: "{{domain_name}}"
+        status_code: 200
+        
+    - name: Update Okazas SQL connection string 
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/env/local/okazas/DbConfig"
+        method: PUT
+        body: '"{{sql_connection_string}}User Id={{sql_smartm_user}};Password={{sql_smartm_user_password}}"'
+        status_code: 200   
+   
+    - name: Update Snitch connection string Get current value
+      uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/env/local/snitch/db/sqlServer?raw"
+        method: GET
+        return_content: yes
+      register: consul_response 
+
+    - name: Parse current JSON value
+      set_fact:
+        current_value: "{{ consul_response.content | from_json | default({}, true) }}"
+      ignore_errors: yes
+
+    - name: Debug current value
+      debug:
+        msg: "Current value: {{ current_value | to_nice_json }}"
+      
+    - name: Update Snitch update fields
+      set_fact:
+        updated_value: "{{ current_value | combine({
+                          'serv': sql_connection_string,
+                          'user': sql_smartm_user,
+                          'password': sql_smartm_user_password
+                        }) }}"
+    - name: Debug updated value
+      debug:
+        msg: "Updated value: {{ updated_value | to_nice_json }}"
+      
+                        
+
+    - name: Upload updated JSON
+      uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/env/local/snitch/db/sqlServer"
+        method: PUT
+        body: "{{ updated_value | to_nice_json }}"
+        body_format: json
+        status_code: 200
+      
+    - name: Update Kaizo SQL connection string
+      uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/env/local/kaizo/providers/MSSql"
+        method: PUT
+        body: |
+          {
+            "server": sql_connection_string,
+            "user": sql_smartm_user,
+            "password": sql_smartm_user_password
+          }
+        body_format: json
+        status_code: 200      
+        
+    - name: Update Pam SQL connection string 
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/env/local/pam/DbConfig"
+        method: PUT
+        body: '"{{sql_connection_string}}User Id={{sql_smartm_user}};Password={{sql_smartm_user_password}}"'
+        status_code: 200   
+        
+    - name: Update Sequoia connection string Get current value
+      uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/env/local/sequoia/provider/mssql?raw"
+        method: GET
+        return_content: yes
+      register: consul_response 
+
+    - name: Parse current JSON value
+      set_fact:
+        current_value: "{{ consul_response.content | from_json | default({}, true) }}"
+      ignore_errors: yes
+
+    - name: Debug current value
+      debug:
+        msg: "Current value: {{ current_value | to_nice_json }}"
+      
+    - name: Update Sequoia update fields
+      set_fact:
+        updated_value: "{{ current_value | combine({
+                          'server': sql_connection_string,
+                          'user': sql_smartm_user,
+                          'password': sql_smartm_user_password
+                        }) }}"
+    - name: Debug updated value
+      debug:
+        msg: "Updated value: {{ updated_value | to_nice_json }}"    
+        
+    - name: Update Pam SQL connection string 
+      ansible.builtin.uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/env/local/xhuma/MSSQL"
+        method: PUT
+        body: '"{{sql_connection_string}}User Id={{sql_smartm_user}};Password={{sql_smartm_user_password}}"'
+        status_code: 200       
+        
+        
+    - name: Update Valkirya address
+      uri:
+        url: "http://consul.service.lms.valerian:8500/v1/kv/valerian%201.0/external%20services/valkyrie/address"
+        method: PUT
+        body: "{{hostvars['valkyrie'].host_name}}:{{nexus_port}}"
+        status_code: 200    
+    - name: Debug valkyrie address
+      debug:
+        msg: "Nexsus address: {{hostvars['valkyrie'].host_name}}:{{nexus_port}}"

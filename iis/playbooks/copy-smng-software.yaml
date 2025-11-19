@@ -1,0 +1,24 @@
+- name: copy smng server software
+  hosts: iis
+  gather_facts: no
+  collections:
+    - ansible.windows
+
+  vars_files:
+    - "{{ipack}}/iis/playbooks/vars/iis-common-vars.yaml"
+  
+  tasks:
+    - name: Check if target file exists on Windows
+      ansible.windows.win_stat:
+        path: '{{win_smng_zip_file}}'
+      register: smng_zip_file_check
+
+    - name: Print uptime output
+      debug:
+        msg: "{{ smng_zip_file_check.stat.exists }}"
+
+    - name: Copy SMNG zip file 
+      ansible.windows.win_copy:
+        src: "{{SMNG_source_zip_file}}"
+        dest: "{{SMNG_zip_dest_dir}}"
+      when: not smng_zip_file_check.stat.exists

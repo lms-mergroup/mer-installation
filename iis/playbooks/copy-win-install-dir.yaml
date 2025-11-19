@@ -1,0 +1,15 @@
+- name: Copy Windows install directory 
+  hosts: iis
+  gather_facts: no
+  collections:
+    - ansible.windows
+
+  vars_files:
+   - "{{ipack}}/iis/playbooks/vars/iis-common-vars.yaml"
+
+
+  tasks:
+    - name: Copy folder
+      ansible.windows.win_copy:
+        src: "{{source_win_install_dir}}"     
+        dest: "{{dest_win_install_dir}}"             

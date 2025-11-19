@@ -1,0 +1,20 @@
+- name: IIS import web sites definitions
+  hosts: iis 
+  gather_facts: no
+  collections:
+    - ansible.windows
+ 
+  vars_files:
+      - "{{ipack}}/iis/playbooks/vars/iis-install.yaml"
+
+
+  tasks:
+    - name: Run IIS import script
+      win_shell: |
+        powershell.exe -ExecutionPolicy Bypass -File "{{windows_install_dir}}{{import_web_sites_script_file}}" -Action Import -ConfigPath "{{windows_install_dir}}{{web_sites_json}}"
+      register: ps_output  
+      args:
+        chdir: "{{windows_install_dir}}"
+    - name: Show script output in Jenkins
+      ansible.builtin.debug:
+        msg: "{{ ps_output.stdout }}"
